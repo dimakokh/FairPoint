@@ -3,369 +3,327 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Kitchen Board — Показ заказов</title>
+<title>FireKiosk — Показ заказов</title>
 
-<!-- Firebase (compat build for simple realtime DB usage) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
 <style>
-  :root{
-    --bg:#f5f5f5;
-    --card:#ffffff;
-    --muted:#666;
-    --accent:#7B1F24;
-    --accent-light:#B94A4F;
-    --accent-soft:#9B3A66;
-    --ready:#C24B4F;
-    --glass: rgba(255,255,255,0.3);
-    --shadow: 0 6px 18px rgba(0,0,0,0.2);
-    font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
+:root{
+  --bg:#0e0e0e;
+  --card:#151515;
+  --red:#c62828;
+  --green:#2e7d32;
+  --text:#ffffff;
+  --muted:#aaaaaa;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+}
 
-  html,body{
-    height:100%;
-    margin:0;
-    background:#f9f9f9;
-    color:#000;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-  }
+*{ box-sizing:border-box }
 
-  .container{
-    max-width:1200px;
-    margin:28px auto;
-    padding:20px;
-  }
+html,body{
+  margin:0;
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+}
 
-  header{
-    display:flex;
-    align-items:center;
-    gap:16px;
-    margin-bottom:18px;
-  }
+.app{
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
 
-  .logo{
-    width:56px;height:56px;border-radius:12px;
-    background: linear-gradient(135deg,var(--accent) 0%, var(--accent-soft) 60%);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
-    display:flex;align-items:center;justify-content:center;font-weight:700;
-    font-size:20px;
-    cursor:pointer;
-  }
+/* HEADER */
+header{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:16px 24px;
+  border-bottom:1px solid #222;
+}
 
-  h1{ font-size:20px; margin:0; letter-spacing:0.6px;}
-  p.lead{ margin:0;color:var(--muted); font-size:13px }
+#logo{
+  width:48px;
+  height:48px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
 
-  .board{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:18px;
-    margin-top:18px;
-  }
+/* сюда ты вставляешь SVG */
+#logo svg{
+  width:100%;
+  height:100%;
+}
 
-  .column{
-    background: var(--card);
-    border-radius:14px; padding:14px; box-shadow:var(--shadow);
-    min-height:300px;
-  }
+.header-title{
+  font-size:20px;
+  font-weight:700;
+}
 
-  .col-title{
-    display:flex;align-items:center;gap:10px;margin-bottom:12px;
-  }
-  .col-title h2{ margin:0;font-size:16px; }
-  .col-count{
-    margin-left:auto; font-weight:700; background:rgba(0,0,0,0.05);
-    padding:6px 10px;border-radius:10px;font-size:13px;
-  }
+/* BOARD */
+.board{
+  flex:1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+}
 
-  .list { display:flex; flex-direction:column; gap:12px; }
+.column{
+  display:flex;
+  flex-direction:column;
+}
 
-  .card{
-    display:flex; gap:12px; align-items:center;
-    padding:12px;border-radius:12px;background:#fff;
-    border: 1px solid rgba(0,0,0,0.05);
-    transition: transform .18s ease, box-shadow .18s ease, opacity .3s ease;
-  }
-  .card:hover{ transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.15) }
+.column-header{
+  padding:14px;
+  font-size:18px;
+  font-weight:700;
+  text-align:center;
+}
 
-  .status-dot{ width:12px;height:12px;border-radius:50%;flex:0 0 12px; }
-  .dot-cooking{ background: var(--accent); }
-  .dot-ready{ background: var(--ready); }
+.column.cooking .column-header{
+  background:var(--red);
+}
 
-  .card-left{ display:flex; gap:12px; align-items:center; width:100%; }
-  .order-number{
-    min-width:92px;padding:8px 10px;border-radius:8px;font-weight:700;
-    background: rgba(0,0,0,0.03);
-    text-align:center; font-size:18px;
-    color: #000;
-  }
-  .details{ flex:1; }
-  .details .title{ font-size:16px; margin-bottom:6px; color:#000; }
-  .details .meta{ font-size:13px; color:var(--muted); }
+.column.ready .column-header{
+  background:var(--green);
+}
 
-  .card-actions{ display:flex; gap:8px; align-items:center; }
-  .small-btn{ padding:6px 8px;border-radius:8px;border:0; background:rgba(0,0,0,0.05); color:var(--muted); cursor:pointer }
-  .small-btn.strong{ background: var(--accent); color:#fff; font-weight:600 }
+.list{
+  flex:1;
+  padding:20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(160px,1fr));
+  gap:16px;
+}
 
-  /* ready highlight */
-  .card.ready{ border-left:4px solid var(--ready); box-shadow: 0 8px 20px rgba(178,70,74,0.12) }
+/* ORDER CARD */
+.order{
+  background:var(--card);
+  border-radius:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:36px;
+  font-weight:800;
+  height:120px;
+  letter-spacing:2px;
+}
 
-  /* responsive */
-  @media (max-width:900px){
-    .board{ grid-template-columns: 1fr; }
-  }
+/* персональное меню */
+.hidden{ display:none }
 
-  .hidden{ display:none; }
+#staffMenu{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.85);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+#staffBox{
+  background:#111;
+  padding:20px;
+  border-radius:14px;
+  width:320px;
+}
+
+#staffBox h3{
+  margin:0 0 12px 0;
+}
+
+#staffBox input{
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:8px;
+  border:none;
+}
+
+#staffBox button{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  background:#333;
+  color:#fff;
+  cursor:pointer;
+  margin-bottom:8px;
+}
+
+#terminalList{
+  margin-top:10px;
+  font-size:14px;
+}
+
+#terminalList div{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:6px;
+}
 </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <div class="logo" id="logo">KB</div>
-      <div>
-        <h1>Kitchen Board — Показ заказов</h1>
-        <p class="lead">Две колонки: <strong>Готовится</strong> и <strong>Готово</strong>.</p>
-      </div>
-    </header>
 
-    <div class="board">
-      <section class="column" id="colCooking">
-        <div class="col-title">
-          <h2>Готовится</h2>
-          <div class="col-count" id="countCooking">0</div>
-        </div>
-        <div class="list" id="listCooking"></div>
-      </section>
+<div class="app">
 
-      <section class="column" id="colReady">
-        <div class="col-title">
-          <h2>Готово</h2>
-          <div class="col-count" id="countReady">0</div>
-        </div>
-        <div class="list" id="listReady"></div>
-      </section>
+  <header>
+    <div id="logo">
+      <!-- SVG ЛОГОТИП ТУТ -->
+    </div>
+    <div class="header-title">FireKiosk — показ заказов</div>
+  </header>
+
+  <div class="board">
+    <div class="column cooking">
+      <div class="column-header">Готовится</div>
+      <div class="list" id="listCooking"></div>
+    </div>
+    <div class="column ready">
+      <div class="column-header">Готово</div>
+      <div class="list" id="listReady"></div>
     </div>
   </div>
+</div>
 
-  <!-- персональное меню -->
-  <div id="personalMenu" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-      background:#fff;padding:20px;border-radius:12px;box-shadow:0 12px 24px rgba(0,0,0,0.2);z-index:9999;">
+<!-- ПЕРСОНАЛ -->
+<div id="staffMenu" class="hidden">
+  <div id="staffBox">
     <h3>Привязка терминалов</h3>
-    <div>
-      <input id="terminalInput" type="text" placeholder="ID терминала">
-      <button id="btnAddTerminal">Привязать</button>
-    </div>
-    <ul id="terminalList"></ul>
-    <button id="btnCloseMenu">Закрыть</button>
+    <input id="terminalInput" placeholder="ID терминала">
+    <button id="addTerminal">Добавить</button>
+    <div id="terminalList"></div>
+    <button id="closeStaff">Закрыть</button>
   </div>
+</div>
 
 <script>
-const AUTO_EXPIRE_MS = 2*60*1000;
-let orders = new Map();
-let timersExpire = new Map();
+const AUTO_EXPIRE = 2*60*1000;
 
-// UI refs
 const listCooking = document.getElementById('listCooking');
 const listReady = document.getElementById('listReady');
-const countCooking = document.getElementById('countCooking');
-const countReady = document.getElementById('countReady');
 
-// персональное меню
-const logo = document.getElementById('logo');
-const personalMenu = document.getElementById('personalMenu');
-const terminalInput = document.getElementById('terminalInput');
-const btnAddTerminal = document.getElementById('btnAddTerminal');
-const terminalList = document.getElementById('terminalList');
-const btnCloseMenu = document.getElementById('btnCloseMenu');
-
-// привязанные терминалы
+let orders = new Map();
+let timers = new Map();
 let terminals = JSON.parse(localStorage.getItem('terminals')||'[]');
 
-// тройной клик по логотипу
-let clickCount = 0;
-logo.addEventListener('click', ()=>{
-  clickCount++;
-  setTimeout(()=>{ clickCount=0; },500);
-  if(clickCount>=3){
-    personalMenu.classList.remove('hidden');
-    refreshTerminalList();
-    clickCount=0;
+/* ===== STAFF MENU ===== */
+const logo = document.getElementById('logo');
+const staffMenu = document.getElementById('staffMenu');
+const terminalInput = document.getElementById('terminalInput');
+const addTerminal = document.getElementById('addTerminal');
+const terminalList = document.getElementById('terminalList');
+const closeStaff = document.getElementById('closeStaff');
+
+let clicks=0;
+logo.onclick=()=>{
+  clicks++;
+  setTimeout(()=>clicks=0,400);
+  if(clicks>=3){
+    staffMenu.classList.remove('hidden');
+    renderTerminals();
+    clicks=0;
   }
-});
+};
 
-btnCloseMenu.addEventListener('click', ()=>{
-  personalMenu.classList.add('hidden');
-});
+closeStaff.onclick=()=>staffMenu.classList.add('hidden');
 
-btnAddTerminal.addEventListener('click', ()=>{
-  const val = terminalInput.value.trim();
-  if(val && !terminals.includes(val)){
-    terminals.push(val);
-    localStorage.setItem('terminals', JSON.stringify(terminals));
+addTerminal.onclick=()=>{
+  const id=terminalInput.value.trim();
+  if(id && !terminals.includes(id)){
+    terminals.push(id);
+    localStorage.setItem('terminals',JSON.stringify(terminals));
     terminalInput.value='';
-    refreshTerminalList();
+    renderTerminals();
   }
-});
+};
 
-function refreshTerminalList(){
+function renderTerminals(){
   terminalList.innerHTML='';
   terminals.forEach(t=>{
-    const li = document.createElement('li');
-    li.textContent=t;
-    const btn = document.createElement('button');
-    btn.textContent='Удалить';
-    btn.addEventListener('click', ()=>{
-      terminals = terminals.filter(x=>x!==t);
-      localStorage.setItem('terminals', JSON.stringify(terminals));
-      refreshTerminalList();
-    });
-    li.appendChild(btn);
-    terminalList.appendChild(li);
+    const row=document.createElement('div');
+    row.textContent=t;
+    const del=document.createElement('button');
+    del.textContent='×';
+    del.onclick=()=>{
+      terminals=terminals.filter(x=>x!==t);
+      localStorage.setItem('terminals',JSON.stringify(terminals));
+      renderTerminals();
+      refresh();
+    };
+    row.appendChild(del);
+    terminalList.appendChild(row);
   });
 }
 
-// helpers
-function el(tag, cls, inner){
-  const d=document.createElement(tag);
-  if(cls) d.className=cls;
-  if(inner!==undefined) d.innerHTML=inner;
+/* ===== UI ===== */
+function renderOrder(num){
+  const d=document.createElement('div');
+  d.className='order';
+  d.textContent=num;
   return d;
 }
 
-function formatTime(ts){ return new Date(ts).toLocaleTimeString(); }
-
-function renderOrderCard(key, order){
-  const c=el('div','card');
-  c.dataset.key=key;
-  if(order.status==='ready' || order.status==='completed') c.classList.add('ready');
-
-  const left=el('div','card-left');
-  const dot=el('div','status-dot '+(order.status==='ready'||order.status==='completed'?'dot-ready':'dot-cooking'));
-  const num=el('div','order-number',`<div style="font-size:12px;color:var(--muted)">#</div>${order.orderNumber||key}`);
-  const details=el('div','details');
-  const title=el('div','title', order.items && order.items.length? order.items.map(i=>i.name).join(', '):'Заказ');
-  const meta=el('div','meta', `Терминал: ${order.terminalId||'—'} • ${order.time?formatTime(order.time):''}`);
-
-  details.appendChild(title);
-  details.appendChild(meta);
-  left.appendChild(dot);
-  left.appendChild(num);
-  left.appendChild(details);
-
-  c.appendChild(left);
-  return c;
-}
-
-function refreshUI(){
+function refresh(){
   listCooking.innerHTML='';
   listReady.innerHTML='';
-  let cookingCount=0, readyCount=0;
+  if(terminals.length===0) return;
 
-  if(terminals.length===0) return; // ничего не показываем без привязанных терминалов
+  for(const [key,o] of orders){
+    if(!terminals.includes(o.terminalId)) continue;
+    if(o.status==='waiting_for_cash') continue;
 
-  for(const [key,order] of orders.entries()){
-    if(!terminals.includes(order.terminalId)) continue;
-
-    if(order.status==='ready'||order.status==='completed'){
-      listReady.appendChild(renderOrderCard(key,order));
-      readyCount++;
-    }else{
-      listCooking.appendChild(renderOrderCard(key,order));
-      cookingCount++;
+    if(o.status==='cooking'){
+      listCooking.appendChild(renderOrder(o.orderNumber));
+    }
+    if(o.status==='completed' || o.status==='ready'){
+      listReady.appendChild(renderOrder(o.orderNumber));
     }
   }
-
-  countCooking.textContent=cookingCount;
-  countReady.textContent=readyCount;
 }
 
-function handleBecameReady(key, order){
-  const spoken=`Заказ номер ${order.orderNumber||key} готов`;
-  speakText(spoken);
-
-  clearExpireTimer(key);
-  const t=setTimeout(()=>{
+function scheduleRemove(key){
+  if(timers.has(key)) return;
+  timers.set(key,setTimeout(()=>{
     orders.delete(key);
-    refreshUI();
-  },AUTO_EXPIRE_MS);
-  timersExpire.set(key,t);
+    refresh();
+  },AUTO_EXPIRE));
 }
 
-function clearExpireTimer(key){
-  const t=timersExpire.get(key);
-  if(t){ clearTimeout(t); timersExpire.delete(key); }
-}
+/* ===== FIREBASE ===== */
+firebase.initializeApp({
+  apiKey:"AIzaSyCSw_6Lv22XH-jwK3NN6B6QHH_UCa6Sn1s",
+  authDomain:"fairpay-fast.firebaseapp.com",
+  databaseURL:"https://fairpay-fast-default-rtdb.firebaseio.com",
+  projectId:"fairpay-fast"
+});
 
-function speakText(text){
-  try{
-    beep();
-    const u=new SpeechSynthesisUtterance(text);
-    u.lang='ru-RU';
-    u.rate=1;
-    u.volume=1;
-    speechSynthesis.cancel();
-    setTimeout(()=>speechSynthesis.speak(u),220);
-  }catch(e){}
-}
+const ref=firebase.database().ref('orders');
 
-function beep(){
-  try{
-    const ctx=new (window.AudioContext||window.webkitAudioContext)();
-    const o=ctx.createOscillator();
-    const g=ctx.createGain();
-    o.type='sine';
-    o.frequency.value=880;
-    g.gain.value=0.08;
-    o.connect(g); g.connect(ctx.destination);
-    o.start();
-    setTimeout(()=>{o.stop();ctx.close();},120);
-  }catch(e){}
-}
+ref.on('child_added',s=>{
+  orders.set(s.key,s.val());
+  if(s.val().status==='completed'||s.val().status==='ready'){
+    scheduleRemove(s.key);
+  }
+  refresh();
+});
 
-// Firebase
-const FIREBASE_CONFIG={
-  apiKey: "AIzaSyABvY_6cHonbLvdBj5cYMSheJDLMd_-bNw",
-  authDomain: "app-fairpay.firebaseapp.com",
-  databaseURL: "https://app-fairpay-default-rtdb.firebaseio.com",
-  projectId: "app-fairpay",
-  storageBucket: "app-fairpay.firebasestorage.app",
-  messagingSenderId: "29576302334",
-  appId: "1:29576302334:web:0e559f804bf62c59981faf"
-};
+ref.on('child_changed',s=>{
+  orders.set(s.key,s.val());
+  if(s.val().status==='completed'||s.val().status==='ready'){
+    scheduleRemove(s.key);
+  }
+  refresh();
+});
 
-let dbRef=null;
-try{
-  firebase.initializeApp(FIREBASE_CONFIG);
-  const db=firebase.database();
-  dbRef=db.ref('orders');
-  dbRef.on('child_added', snapshot=>{
-    const key=snapshot.key;
-    const val=snapshot.val();
-    orders.set(key,val);
-    refreshUI();
-    if(val.status==='ready'||val.status==='completed') handleBecameReady(key,val);
-  });
-  dbRef.on('child_changed', snapshot=>{
-    const key=snapshot.key;
-    const val=snapshot.val();
-    const prev=orders.get(key);
-    orders.set(key,val);
-    refreshUI();
-    const wasReady=prev && (prev.status==='ready'||prev.status==='completed');
-    const isReady=val && (val.status==='ready'||val.status==='completed');
-    if(!wasReady && isReady) handleBecameReady(key,val);
-  });
-  dbRef.on('child_removed', snapshot=>{
-    const key=snapshot.key;
-    orders.delete(key);
-    clearExpireTimer(key);
-    refreshUI();
-  });
-}catch(e){console.warn('Firebase init failed',e);}
-
-// expose console helpers
-window._kitchen={orders, refreshUI};
+ref.on('child_removed',s=>{
+  orders.delete(s.key);
+  refresh();
+});
 </script>
+
 </body>
 </html>
