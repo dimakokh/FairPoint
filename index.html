@@ -182,8 +182,8 @@
   - orders expected: { orderNumber: "0001"/"C0001", status: "cooking"|"ready"|"waiting_for_cash", time, items, ... }
 */
 const AUTO_EXPIRE_MS = 2 * 60 * 1000; // 2 minutes
-let demoMode = true;
-let firebaseEnabled = false;
+let demoMode = false;
+let firebaseEnabled = true;
 let orders = new Map(); // key -> order object
 let timersExpire = new Map(); // key -> timeoutId
 
