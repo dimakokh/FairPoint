@@ -3,208 +3,170 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Kitchen Board — Показ заказов</title>
+<title>Kitchen Board</title>
 
-<!-- Firebase (compat build for simple realtime DB usage) -->
+<!-- Firebase COMPAT (без module) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
 <style>
-  :root{
-    --bg:#10060a; /* very dark */
-    --card:#1f0b0d;
-    --muted:#bfb5b7;
-    --accent:#7B1F24; /* burgundy base */
-    --accent-light:#B94A4F; /* lighter red */
-    --accent-soft:#9B3A66; /* purple-ish */
-    --ready:#C24B4F; /* light burgundy */
-    --glass: rgba(255,255,255,0.03);
-    --shadow: 0 6px 18px rgba(0,0,0,0.6);
-    font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
+:root{
+  --bg:#0f0710;
+  --card:#1f0b0d;
+  --muted:#bfb5b7;
+  --accent:#7b1f24;
+  --accent-light:#c24b4f;
+  --accent-purple:#9b3a66;
+}
 
-  html,body{
-    height:100%;
-    margin:0;
-    background: linear-gradient(180deg, #0f0710 0%, #11060a 60%);
-    color: #fff;
-    -webkit-font-smoothing:antialiased;
-    -moz-osx-font-smoothing:grayscale;
-  }
+html,body{
+  margin:0;
+  height:100%;
+  background:linear-gradient(180deg,#0f0710,#14070b);
+  color:#fff;
+  font-family:Segoe UI,Roboto,Arial;
+}
 
-  .container{
-    max-width:1200px;
-    margin:28px auto;
-    padding:20px;
-  }
+.container{
+  max-width:1200px;
+  margin:24px auto;
+  padding:16px;
+}
 
-  header{
-    display:flex;
-    align-items:center;
-    gap:16px;
-    margin-bottom:18px;
-  }
+header{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
 
-  .logo{
-    width:56px;height:56px;border-radius:12px;
-    background: linear-gradient(135deg,var(--accent) 0%, var(--accent-soft) 60%);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.5), inset 0 -6px 18px rgba(255,255,255,0.03);
-    display:flex;align-items:center;justify-content:center;font-weight:700;
-    font-size:20px;
-  }
+.logo{
+  width:56px;
+  height:56px;
+  border-radius:12px;
+  background:linear-gradient(135deg,var(--accent),var(--accent-purple));
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:700;
+  font-size:22px;
+}
 
-  h1{ font-size:20px; margin:0; letter-spacing:0.6px;}
-  p.lead{ margin:0;color:var(--muted); font-size:13px }
+.board{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  margin-top:24px;
+}
 
-  .controls{
-    margin-left:auto;
-    display:flex;
-    gap:10px;
-    align-items:center;
-  }
+.column{
+  background:rgba(255,255,255,0.03);
+  border-radius:14px;
+  padding:14px;
+}
 
-  .btn{
-    padding:10px 14px;border-radius:10px;border:0;background:var(--glass);
-    color:var(--muted); cursor:pointer;
-    backdrop-filter: blur(4px);
-  }
-  .btn.primary{
-    background: linear-gradient(90deg,var(--accent) 0%,var(--accent-soft) 90%);
-    color: #fff; font-weight:600; box-shadow: 0 6px 18px rgba(123,31,36,0.25);
-  }
+.col-title{
+  display:flex;
+  align-items:center;
+  margin-bottom:12px;
+}
 
-  .board{
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap:18px;
-    margin-top:18px;
-  }
+.col-title h2{
+  margin:0;
+  font-size:18px;
+}
 
-  .column{
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    border-radius:14px; padding:14px; box-shadow:var(--shadow);
-    min-height:300px;
-    border: 1px solid rgba(255,255,255,0.03);
-  }
+.count{
+  margin-left:auto;
+  background:rgba(255,255,255,0.08);
+  padding:6px 10px;
+  border-radius:10px;
+  font-weight:700;
+}
 
-  .col-title{
-    display:flex;align-items:center;gap:10px;margin-bottom:12px;
-  }
-  .col-title h2{ margin:0;font-size:16px; }
-  .col-count{
-    margin-left:auto; font-weight:700; background:rgba(255,255,255,0.04);
-    padding:6px 10px;border-radius:10px;font-size:13px;
-  }
+.list{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
 
-  .list { display:flex; flex-direction:column; gap:12px; }
+.card{
+  background:linear-gradient(180deg,rgba(0,0,0,.3),rgba(255,255,255,.03));
+  border-radius:12px;
+  padding:12px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  border-left:4px solid var(--accent);
+}
 
-  .card{
-    display:flex; gap:12px; align-items:center;
-    padding:12px;border-radius:12px;background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(255,255,255,0.02));
-    border: 1px solid rgba(255,255,255,0.03);
-    transition: transform .18s ease, box-shadow .18s ease, opacity .3s ease;
-  }
-  .card:hover{ transform: translateY(-6px); box-shadow: 0 16px 32px rgba(0,0,0,0.6) }
+.card.ready{
+  border-left-color:var(--accent-light);
+}
 
-  .status-dot{ width:12px;height:12px;border-radius:50%;flex:0 0 12px; }
-  .dot-cooking{ background: linear-gradient(180deg,var(--accent-light),var(--accent)); }
-  .dot-ready{ background: linear-gradient(180deg,var(--ready),var(--accent-soft)); }
+.order-number{
+  font-size:22px;
+  font-weight:700;
+  min-width:90px;
+  text-align:center;
+}
 
-  .card-left{ display:flex; gap:12px; align-items:center; width:100%; }
-  .order-number{
-    min-width:92px;padding:8px 10px;border-radius:8px;font-weight:700;
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    text-align:center; font-size:18px;
-    color: #fff;
-  }
-  .details{ flex:1; }
-  .details .title{ font-size:16px; margin-bottom:6px; color:#fff; }
-  .details .meta{ font-size:13px; color:var(--muted); }
+.details{
+  flex:1;
+}
 
-  .card-actions{ display:flex; gap:8px; align-items:center; }
-  .small-btn{ padding:6px 8px;border-radius:8px;border:0; background:rgba(255,255,255,0.03); color:var(--muted); cursor:pointer }
-  .small-btn.strong{ background: linear-gradient(90deg,var(--accent-light),var(--accent)); color:#fff; font-weight:600 }
+.meta{
+  color:var(--muted);
+  font-size:13px;
+}
 
-  /* ready highlight */
-  .card.ready{ border-left:4px solid var(--ready); box-shadow: 0 8px 30px rgba(178,70,74,0.12) }
-
-  /* responsive */
-  @media (max-width:900px){
-    .board{ grid-template-columns: 1fr; }
-  }
-
-  /* small helper */
-  .muted{ color:var(--muted); font-size:13px }
-  .big{ font-size:22px; font-weight:700; color:#fff }
+button{
+  background:linear-gradient(90deg,var(--accent),var(--accent-purple));
+  color:#fff;
+  border:0;
+  padding:8px 10px;
+  border-radius:8px;
+  cursor:pointer;
+}
 </style>
 </head>
+
 <body>
-  <div class="container">
-    <header>
-      <div class="logo">KB</div>
-      <div>
-        <h1>Kitchen Board — Показ заказов</h1>
-        <p class="lead">Две колонки: <strong>Готовится</strong> и <strong>Готово</strong>. Цвета: бордово-фиолетовая палитра.</p>
-      </div>
+<div class="container">
 
-      <div class="controls">
-        <button id="btnDemo" class="btn">Демо</button>
-        <button id="btnAddDemo" class="btn">Добавить тест заказ</button>
-        <button id="btnClear" class="btn">Очистить всё (демо)</button>
-        <button id="btnHelp" class="btn">Инструкция</button>
-      </div>
-    </header>
-
-    <div class="board">
-      <section class="column" id="colCooking">
-        <div class="col-title">
-          <h2>Готовится</h2>
-          <div class="col-count" id="countCooking">0</div>
-        </div>
-        <div class="list" id="listCooking"></div>
-      </section>
-
-      <section class="column" id="colReady">
-        <div class="col-title">
-          <h2>Готово</h2>
-          <div class="col-count" id="countReady">0</div>
-        </div>
-        <div class="list" id="listReady"></div>
-      </section>
+<header>
+  <div class="logo">KB</div>
+  <div>
+    <h1>Kitchen Board</h1>
+    <div style="color:#bfb5b7;font-size:13px">
+      Готовится / Готово
     </div>
   </div>
+</header>
+
+<div class="board">
+  <div class="column">
+    <div class="col-title">
+      <h2>Готовится</h2>
+      <div class="count" id="countCooking">0</div>
+    </div>
+    <div class="list" id="listCooking"></div>
+  </div>
+
+  <div class="column">
+    <div class="col-title">
+      <h2>Готово</h2>
+      <div class="count" id="countReady">0</div>
+    </div>
+    <div class="list" id="listReady"></div>
+  </div>
+</div>
+
+</div>
 
 <script>
-/*
-  Kitchen Board
-  - listens to Firebase Realtime Database node "orders" if firebaseConfig provided
-  - otherwise demo mode
-  - orders expected: { orderNumber: "0001"/"C0001", status: "cooking"|"ready"|"waiting_for_cash", time, items, ... }
-*/
-const AUTO_EXPIRE_MS = 2 * 60 * 1000; // 2 minutes
-let demoMode = false;
-let firebaseEnabled = true;
-let orders = new Map(); // key -> order object
-let timersExpire = new Map(); // key -> timeoutId
+/* ================= FIREBASE ================= */
 
-// UI refs
-const listCooking = document.getElementById('listCooking');
-const listReady = document.getElementById('listReady');
-const countCooking = document.getElementById('countCooking');
-const countReady = document.getElementById('countReady');
-const btnDemo = document.getElementById('btnDemo');
-const btnAddDemo = document.getElementById('btnAddDemo');
-const btnClear = document.getElementById('btnClear');
-const btnHelp = document.getElementById('btnHelp');
-
-// Import the functions you need from the SDKs you need
-
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Initialize Firebase
-
-const FIREBASE_CONFIG = {
+firebase.initializeApp({
   apiKey: "AIzaSyCSw_6Lv22XH-jwK3NN6B6QHH_UCa6Sn1s",
   authDomain: "fairpay-fast.firebaseapp.com",
   databaseURL: "https://fairpay-fast-default-rtdb.firebaseio.com",
@@ -212,300 +174,95 @@ const FIREBASE_CONFIG = {
   storageBucket: "fairpay-fast.firebasestorage.app",
   messagingSenderId: "764987626490",
   appId: "1:764987626490:web:e3451c8162f6992449ca43"
-};
+});
 
-// Firebase setup (compat)
-let dbRef = null;
-if (FIREBASE_CONFIG && typeof FIREBASE_CONFIG === 'object') {
-  try {
-    firebase.initializeApp(FIREBASE_CONFIG);
-    const db = firebase.database();
-    dbRef = db.ref('orders');
-    firebaseEnabled = true;
-    demoMode = false;
-    console.info('Firebase enabled, listening to /orders');
-  } catch (e) {
-    console.warn('Firebase init failed', e);
-    firebaseEnabled = false;
-    demoMode = true;
-  }
+const db = firebase.database();
+const ordersRef = db.ref("orders");
+
+/* ================= LOGIC ================= */
+
+const AUTO_REMOVE = 2 * 60 * 1000;
+const timers = new Map();
+
+const listCooking = document.getElementById("listCooking");
+const listReady = document.getElementById("listReady");
+const countCooking = document.getElementById("countCooking");
+const countReady = document.getElementById("countReady");
+
+function speak(text){
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = "ru-RU";
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
 }
 
-// helpers
-function el(tag, cls, inner){
-  const d = document.createElement(tag);
-  if (cls) d.className = cls;
-  if (inner !== undefined) d.innerHTML = inner;
-  return d;
-}
+function render(){
+  listCooking.innerHTML = "";
+  listReady.innerHTML = "";
+  let c1 = 0, c2 = 0;
 
-function formatTime(ts){
-  const d = new Date(ts);
-  return d.toLocaleTimeString();
-}
+  orders.forEach((o,k)=>{
+    const card = document.createElement("div");
+    card.className = "card" + (o.status === "ready" ? " ready" : "");
 
-function renderOrderCard(key, order){
-  const c = el('div','card');
-  c.dataset.key = key;
-  if(order.status === 'ready' || order.status === 'cooking_done' || order.status === 'ready') c.classList.add('ready');
+    const num = document.createElement("div");
+    num.className = "order-number";
+    num.textContent = o.orderNumber || k;
 
-  const left = el('div','card-left');
-  const dot = el('div','status-dot '+(order.status === 'ready' ? 'dot-ready' : 'dot-cooking'));
-  const num = el('div','order-number', `<div style="font-size:12px;color:var(--muted)">#</div>${order.orderNumber || key}`);
-  const details = el('div','details');
-  const title = el('div','title', `${order.items && order.items.length ? order.items.map(i=>i.name).join(', ') : 'Заказ'}`);
-  const meta = el('div','meta', `Терминал: ${order.terminalId||'—'} • ${order.time?formatTime(order.time):''}`);
+    const det = document.createElement("div");
+    det.className = "details";
+    det.innerHTML = `<div>${(o.items||[]).map(i=>i.name).join(", ")}</div>
+                     <div class="meta">Терминал ${o.terminalId||""}</div>`;
 
-  details.appendChild(title);
-  details.appendChild(meta);
-  left.appendChild(dot);
-  left.appendChild(num);
-  left.appendChild(details);
+    card.append(num,det);
 
-  const actions = el('div','card-actions');
-  if(order.status === 'cooking' || order.status === 'waiting_for_cash'){
-    const btnReady = el('button','small-btn strong','Пометить готовым');
-    btnReady.addEventListener('click', ()=> markReady(key));
-    actions.appendChild(btnReady);
-  }
-  // button to remove (demo only)
-  if(demoMode){
-    const btnRm = el('button','small-btn','Удалить');
-    btnRm.addEventListener('click', ()=> removeOrderLocal(key));
-    actions.appendChild(btnRm);
-  }
-
-  c.appendChild(left);
-  c.appendChild(actions);
-  return c;
-}
-
-function refreshUI(){
-  // clear lists
-  listCooking.innerHTML = '';
-  listReady.innerHTML = '';
-  let cookingCount = 0, readyCount = 0;
-  for(const [key, order] of orders.entries()){
-    if(order.status === 'ready' || order.status === 'cooking_done' || order.status === 'ready'){
-      listReady.appendChild(renderOrderCard(key, order));
-      readyCount++;
-    } else {
-      listCooking.appendChild(renderOrderCard(key, order));
-      cookingCount++;
-    }
-  }
-  countCooking.textContent = cookingCount;
-  countReady.textContent = readyCount;
-}
-
-// actions
-function markReady(key){
-  const order = orders.get(key);
-  if(!order) return;
-  if(firebaseEnabled && dbRef){
-    // try update in Firebase
-    firebase.database().ref('orders').child(key).update({ status: 'ready', timeReady: Date.now() })
-      .catch(err=> console.warn('Update failed', err));
-  } else {
-    // demo local update
-    order.status = 'ready';
-    order.timeReady = Date.now();
-    orders.set(key, order);
-    onOrderUpdated(key, order);
-  }
-}
-
-function removeOrderLocal(key){
-  if(firebaseEnabled && dbRef){
-    // don't remove remote automatically
-    firebase.database().ref('orders').child(key).remove().catch(()=>{});
-  } else {
-    orders.delete(key);
-    clearExpireTimer(key);
-    refreshUI();
-  }
-}
-
-// when an order becomes ready -> announce and schedule removal
-function handleBecameReady(key, order){
-  // announce
-  const spoken = `Заказ номер ${order.orderNumber || key} готов`;
-  speakText(spoken);
-
-  // flash visual (we already styled as .ready)
-  // schedule removal in 2 minutes
-  clearExpireTimer(key);
-  const t = setTimeout(()=>{
-    // remove (demo or via firebase)
-    if(firebaseEnabled && dbRef){
-      // optionally we could delete remote or mark expired. We'll simply remove local view; remote remains
-      // Here we remove from UI without deleting remote
-      orders.delete(key);
-      refreshUI();
-    } else {
-      orders.delete(key);
-      refreshUI();
-    }
-  }, AUTO_EXPIRE_MS);
-  timersExpire.set(key, t);
-}
-
-function clearExpireTimer(key){
-  const t = timersExpire.get(key);
-  if(t){ clearTimeout(t); timersExpire.delete(key); }
-}
-
-// speech
-function speakText(text){
-  try{
-    // small beep
-    beep();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ru-RU';
-    u.rate = 1;
-    u.volume = 1;
-    speechSynthesis.cancel();
-    setTimeout(()=> speechSynthesis.speak(u), 220); // after beep
-  }catch(e){ console.warn('TTS fail', e); }
-}
-
-function beep(){
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = 'sine';
-    o.frequency.value = 880;
-    g.gain.value = 0.08;
-    o.connect(g); g.connect(ctx.destination);
-    o.start();
-    setTimeout(()=> { o.stop(); ctx.close(); }, 120);
-  }catch(e){}
-}
-
-// Firebase listeners (if enabled)
-if(firebaseEnabled && dbRef){
-  // listen to child_added + child_changed + child_removed
-  dbRef.on('child_added', snapshot => {
-    const key = snapshot.key;
-    const val = snapshot.val();
-    orders.set(key, val);
-    refreshUI();
-    // if it is already ready on add -> announce
-    if(val && (val.status === 'ready' || val.status === 'cooking_done')){
-      handleBecameReady(key, val);
+    if(o.status === "cooking"){
+      const btn = document.createElement("button");
+      btn.textContent = "Готово";
+      btn.onclick = ()=>ordersRef.child(k).update({status:"ready"});
+      card.append(btn);
+      listCooking.append(card);
+      c1++;
+    }else{
+      listReady.append(card);
+      c2++;
     }
   });
 
-  dbRef.on('child_changed', snapshot => {
-    const key = snapshot.key;
-    const val = snapshot.val();
-    const prev = orders.get(key);
-    orders.set(key, val);
-    refreshUI();
-    // if previous wasn't ready but now is -> became ready
-    const wasReady = prev && (prev.status === 'ready' || prev.status === 'cooking_done');
-    const isReady = val && (val.status === 'ready' || val.status === 'cooking_done');
-    if(!wasReady && isReady){
-      handleBecameReady(key, val);
-    }
-  });
-
-  dbRef.on('child_removed', snapshot => {
-    const key = snapshot.key;
-    orders.delete(key);
-    clearExpireTimer(key);
-    refreshUI();
-  });
+  countCooking.textContent = c1;
+  countReady.textContent = c2;
 }
 
-// Demo utilities
-function addDemoOrder(){
-  const key = 'demo_'+Date.now()+'_'+Math.floor(Math.random()*999);
-  const order = {
-    orderNumber: (Math.random()<0.5? ('C'+String(Math.floor(Math.random()*10000)).padStart(4,'0')) : String(Math.floor(Math.random()*10000)).padStart(4,'0')),
-    status: 'cooking',
-    time: Date.now(),
-    terminalId: 'T'+(100+Math.floor(Math.random()*900)),
-    items: [{name:'Чизбургер'},{name:'Лимонад'}]
-  };
-  orders.set(key, order);
-  refreshUI();
-}
+const orders = new Map();
 
-function demoMarkReadyRandom(){
-  for(const [k,v] of orders.entries()){
-    if(v.status === 'cooking'){
-      v.status='ready';
-      v.timeReady = Date.now();
-      orders.set(k, v);
-      onOrderUpdated(k, v);
-      handleBecameReady(k,v);
-      break;
-    }
-  }
-}
+/* ================= FIREBASE LISTENERS ================= */
 
-function onOrderUpdated(key, order){
-  // used in local demo update path
-  // if order moved to ready -> announce
-  refreshUI();
-  if(order.status === 'ready' || order.status === 'cooking_done'){
-    handleBecameReady(key, order);
-  }
-}
-
-btnDemo.addEventListener('click', ()=>{
-  demoMode = !demoMode;
-  alert('Demo mode ' + (demoMode? 'ON (local only)' : 'OFF - using Firebase if configured'));
+ordersRef.on("child_added", s=>{
+  orders.set(s.key, s.val());
+  render();
 });
 
-btnAddDemo.addEventListener('click', ()=> {
-  if(firebaseEnabled && dbRef && !demoMode){
-    // push a real firebase order for testing (if allowed)
-    const val = {
-      orderNumber: String(Math.floor(Math.random()*10000)).padStart(4,'0'),
-      status: 'cooking',
-      time: Date.now(),
-      terminalId: 'T-TEST',
-      items: [{name:'Тест товар'}]
-    };
-    dbRef.push(val);
-  } else {
-    addDemoOrder();
+ordersRef.on("child_changed", s=>{
+  const prev = orders.get(s.key);
+  const now = s.val();
+  orders.set(s.key, now);
+  render();
+
+  if(prev?.status !== "ready" && now.status === "ready"){
+    speak("Заказ номер " + (now.orderNumber || s.key) + " готов");
+    if(timers.has(s.key)) clearTimeout(timers.get(s.key));
+    timers.set(s.key,setTimeout(()=>{
+      ordersRef.child(s.key).remove();
+    },AUTO_REMOVE));
   }
 });
 
-btnClear.addEventListener('click', ()=>{
-  if(confirm('Очистить локальные demo-заказы?')){
-    orders.clear();
-    timersExpire.forEach(t => clearTimeout(t));
-    timersExpire.clear();
-    refreshUI();
-  }
+ordersRef.on("child_removed", s=>{
+  orders.delete(s.key);
+  if(timers.has(s.key)) clearTimeout(timers.get(s.key));
+  render();
 });
-
-btnHelp.addEventListener('click', ()=> {
-  alert('Инструкция:\n' +
-    '- В колонке "Готовится" отображаются активные заказы.\n' +
-    '- Нажми "Пометить готовым" чтобы перевести заказ в "Готово" (в demo/локально).\n' +
-    '- Когда заказ оказывается в "Готово", звучит голос "Заказ номер ... готов".\n' +
-    '- Заказ остается видимым 2 минуты и исчезает.\n' +
-    '- Для подключения к Firebase вставь конфиг в переменную FIREBASE_CONFIG в коде.');
-});
-
-// initialize with some demo content
-for(let i=0;i<3;i++) addDemoOrder();
-setInterval(()=>{ /* small visual clock tick if needed */ }, 1000);
-
-// allow pressing 'r' to mark one ready for quick demo
-document.addEventListener('keydown', (e)=>{
-  if(e.key === 'r') demoMarkReadyRandom();
-});
-
-// expose console helpers
-window._kitchen = { orders, addDemoOrder, demoMarkReadyRandom, markReady, removeOrderLocal };
-
 </script>
+
 </body>
 </html>
