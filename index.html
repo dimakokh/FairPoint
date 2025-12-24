@@ -1,70 +1,133 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FireKiosk — Показ заказов</title>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
 <style>
-:root{
-  --bg:#0e0e0e;
-  --card:#151515;
-  --red:#c62828;
-  --green:#2e7d32;
-  --text:#ffffff;
-  font-family: Inter, system-ui, Arial;
+html,body{
+  margin:0;
+  height:100%;
+  background:#0e0e0e;
+  color:#fff;
+  font-family:Inter,system-ui;
 }
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text)}
-.app{height:100vh;display:flex;flex-direction:column}
+
+.app{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+}
 
 header{
-  display:flex;align-items:center;gap:12px;
-  padding:16px 24px;border-bottom:1px solid #222
+  display:flex;
+  align-items:center;
+  gap:14px;
+  padding:16px 24px;
+  border-bottom:1px solid #222;
 }
-#logo{width:48px;height:48px;cursor:pointer}
-.header-title{font-size:20px;font-weight:700}
 
-.board{flex:1;display:grid;grid-template-columns:1fr 1fr}
-.column{display:flex;flex-direction:column}
-.column-header{padding:14px;font-size:18px;font-weight:700;text-align:center}
-.column.cooking .column-header{background:var(--red)}
-.column.ready .column-header{background:var(--green)}
+#logo{
+  width:48px;
+  height:48px;
+  cursor:pointer;
+}
+
+.board{
+  flex:1;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+}
+
+.column{
+  display:flex;
+  flex-direction:column;
+}
+
+.column-header{
+  text-align:center;
+  padding:14px;
+  font-weight:800;
+  font-size:18px;
+}
+
+.cooking .column-header{ background:#c62828 }
+.ready .column-header{ background:#2e7d32 }
+
 .list{
-  flex:1;padding:20px;
-  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:16px
-}
-.order{
-  background:var(--card);border-radius:16px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:36px;font-weight:800;height:120px
+  flex:1;
+  padding:20px;
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:16px;
 }
 
-/* STAFF */
+.order{
+  background:#151515;
+  border-radius:18px;
+  height:120px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:36px;
+  font-weight:900;
+  letter-spacing:3px;
+}
+
+/* STAFF MENU */
 #staffMenu{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,0.85);
-  display:none;align-items:center;justify-content:center;
-  z-index:999
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
 }
+
 #staffBox{
-  background:#111;padding:20px;border-radius:14px;width:320px
+  background:#111;
+  padding:20px;
+  width:320px;
+  border-radius:16px;
 }
-#staffBox h3{margin:0 0 12px}
-#staffBox input{width:100%;padding:10px;margin-bottom:8px;border-radius:8px;border:none}
-#staffBox button{width:100%;padding:10px;margin-bottom:8px;border-radius:8px;border:none;background:#333;color:#fff}
-#terminalList div{display:flex;justify-content:space-between;margin-top:6px}
+
+#staffBox h3{ margin-top:0 }
+
+#staffBox input, #staffBox button{
+  width:100%;
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:8px;
+  border:none;
+}
+
+#staffBox button{
+  background:#333;
+  color:#fff;
+  cursor:pointer;
+}
+
+#terminalList div{
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:6px;
+}
 </style>
 </head>
-<body>
 
+<body>
 <div class="app">
+
 <header>
-  <div id="logo"><!-- SVG ТУТ --></div>
-  <div class="header-title">FireKiosk — показ заказов</div>
+  <div id="logo">
+    <!-- SVG ЛОГО -->
+  </div>
+  <div style="font-size:20px;font-weight:800">FireKiosk — показ заказов</div>
 </header>
 
 <div class="board">
@@ -77,8 +140,10 @@ header{
     <div class="list" id="listReady"></div>
   </div>
 </div>
+
 </div>
 
+<!-- STAFF -->
 <div id="staffMenu">
   <div id="staffBox">
     <h3>Привязка терминалов</h3>
@@ -91,124 +156,122 @@ header{
 </div>
 
 <script>
-/* ===== STATE ===== */
-const AUTO_EXPIRE = 2*60*1000;
-let orders=new Map();
-let timers=new Map();
-let terminals=[];
+/* ================= STATE ================= */
+const listCooking = document.getElementById('listCooking');
+const listReady   = document.getElementById('listReady');
 
-/* ===== LOAD TERMINALS ===== */
-function loadTerminals(){
-  terminals=JSON.parse(localStorage.getItem('firekiosk_terminals')||'[]');
-}
-function saveTerminals(){
-  localStorage.setItem('firekiosk_terminals',JSON.stringify(terminals));
-}
+let orders = new Map();
+let timers = new Map();
+let terminals = JSON.parse(localStorage.getItem('terminals') || '[]');
 
-/* ===== UI ===== */
-const listCooking=document.getElementById('listCooking');
-const listReady=document.getElementById('listReady');
+/* ================= STAFF MENU ================= */
+const logo = document.getElementById('logo');
+const staffMenu = document.getElementById('staffMenu');
+const terminalInput = document.getElementById('terminalInput');
+const addTerminal = document.getElementById('addTerminal');
+const resetBtn = document.getElementById('resetTerminals');
+const terminalList = document.getElementById('terminalList');
+const closeStaff = document.getElementById('closeStaff');
 
-function refresh(){
-  listCooking.innerHTML='';
-  listReady.innerHTML='';
-  if(terminals.length===0) return;
-
-  for(const [k,o] of orders){
-    if(!terminals.includes(o.terminalId)) continue;
-    if(o.status==='waiting_for_cash') continue;
-
-    const el=document.createElement('div');
-    el.className='order';
-    el.textContent=o.orderNumber;
-
-    if(o.status==='cooking') listCooking.appendChild(el);
-    if(o.status==='completed'||o.status==='ready'){
-      listReady.appendChild(el);
-      if(!timers.has(k)){
-        timers.set(k,setTimeout(()=>{
-          orders.delete(k);
-          refresh();
-        },AUTO_EXPIRE));
-      }
-    }
+let clicks = 0;
+logo.addEventListener('click', ()=>{
+  clicks++;
+  setTimeout(()=>clicks=0,400);
+  if(clicks === 3){
+    staffMenu.style.display = 'flex';
+    renderTerminals();
+    clicks = 0;
   }
-}
+});
 
-/* ===== STAFF MENU ===== */
-const staffMenu=document.getElementById('staffMenu');
-const terminalInput=document.getElementById('terminalInput');
-const terminalList=document.getElementById('terminalList');
+closeStaff.onclick = ()=>{
+  staffMenu.style.display = 'none';
+};
 
-function renderTerminals(){
-  terminalList.innerHTML='';
-  terminals.forEach(t=>{
-    const row=document.createElement('div');
-    row.textContent=t;
-    const x=document.createElement('button');
-    x.textContent='×';
-    x.onclick=()=>{
-      terminals=terminals.filter(v=>v!==t);
-      saveTerminals();
-      renderTerminals();
-      refresh();
-    };
-    row.appendChild(x);
-    terminalList.appendChild(row);
-  });
-}
-
-document.getElementById('addTerminal').onclick=()=>{
-  const id=terminalInput.value.trim();
-  if(id && !terminals.includes(id)){
+addTerminal.onclick = ()=>{
+  const id = terminalInput.value.trim();
+  if(!id) return;
+  if(!terminals.includes(id)){
     terminals.push(id);
-    saveTerminals();
+    localStorage.setItem('terminals', JSON.stringify(terminals));
     terminalInput.value='';
     renderTerminals();
     refresh();
   }
 };
 
-document.getElementById('resetTerminals').onclick=()=>{
-  terminals=[];
-  saveTerminals();
+resetBtn.onclick = ()=>{
+  terminals = [];
+  localStorage.removeItem('terminals');
   renderTerminals();
   refresh();
 };
 
-document.getElementById('closeStaff').onclick=()=>{
-  staffMenu.style.display='none';
-};
+/* ================= UI ================= */
+function renderTerminals(){
+  terminalList.innerHTML='';
+  terminals.forEach(t=>{
+    const row=document.createElement('div');
+    row.textContent=t;
+    const del=document.createElement('button');
+    del.textContent='×';
+    del.onclick=()=>{
+      terminals=terminals.filter(x=>x!==t);
+      localStorage.setItem('terminals',JSON.stringify(terminals));
+      renderTerminals();
+      refresh();
+    };
+    row.appendChild(del);
+    terminalList.appendChild(row);
+  });
+}
 
-/* triple click */
-let clicks=0;
-document.getElementById('logo').onclick=()=>{
-  clicks++;
-  setTimeout(()=>clicks=0,400);
-  if(clicks===3){
-    staffMenu.style.display='flex';
-    renderTerminals();
-    clicks=0;
+function renderOrder(num){
+  const d=document.createElement('div');
+  d.className='order';
+  d.textContent=num;
+  return d;
+}
+
+function refresh(){
+  listCooking.innerHTML='';
+  listReady.innerHTML='';
+  if(terminals.length === 0) return;
+
+  for(const [,o] of orders){
+    if(!terminals.includes(o.terminalId)) continue;
+    if(o.status === 'waiting_for_cash') continue;
+
+    if(o.status === 'cooking'){
+      listCooking.appendChild(renderOrder(o.orderNumber));
+    }
+    if(o.status === 'completed' || o.status === 'ready'){
+      listReady.appendChild(renderOrder(o.orderNumber));
+    }
   }
-};
+}
 
-/* ===== FIREBASE ===== */
+/* ================= FIREBASE ================= */
 firebase.initializeApp({
   apiKey:"AIzaSyCSw_6Lv22XH-jwK3NN6B6QHH_UCa6Sn1s",
   databaseURL:"https://fairpay-fast-default-rtdb.firebaseio.com",
   projectId:"fairpay-fast"
 });
 
-firebase.database().ref('orders')
-.on('value',snap=>{
-  orders.clear();
-  snap.forEach(s=>orders.set(s.key,s.val()));
+const ref = firebase.database().ref('orders');
+
+ref.on('child_added', s=>{
+  orders.set(s.key, s.val());
   refresh();
 });
-
-/* INIT */
-loadTerminals();
-refresh();
+ref.on('child_changed', s=>{
+  orders.set(s.key, s.val());
+  refresh();
+});
+ref.on('child_removed', s=>{
+  orders.delete(s.key);
+  refresh();
+});
 </script>
 </body>
 </html>
