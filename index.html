@@ -198,12 +198,13 @@ const btnClear = document.getElementById('btnClear');
 const btnHelp = document.getElementById('btnHelp');
 
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
+
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
+// Initialize Firebase
+
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCSw_6Lv22XH-jwK3NN6B6QHH_UCa6Sn1s",
   authDomain: "fairpay-fast.firebaseapp.com",
   databaseURL: "https://fairpay-fast-default-rtdb.firebaseio.com",
@@ -212,10 +213,6 @@ const firebaseConfig = {
   messagingSenderId: "764987626490",
   appId: "1:764987626490:web:e3451c8162f6992449ca43"
 };
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const FIREBASE_CONFIG = null; // <-- вставь сюда объект конфигурации для включения Firebase
 
 // Firebase setup (compat)
 let dbRef = null;
