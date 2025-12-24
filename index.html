@@ -9,7 +9,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
 <style>
-/* ================= THEMES ================= */
 :root{
   --bg:#0e0e0e;
   --text:#ffffff;
@@ -28,7 +27,6 @@ body.light{
   --ready:#4caf50;
 }
 
-/* ================= BASE ================= */
 html,body{
   margin:0;
   height:100%;
@@ -100,7 +98,7 @@ header{
   border:1px solid var(--border);
 }
 
-/* ================= STAFF MENU ================= */
+/* STAFF MENU */
 #staffMenu{
   position:fixed;
   inset:0;
@@ -173,7 +171,7 @@ header{
 
 </div>
 
-<!-- ================= STAFF ================= -->
+<!-- STAFF MENU -->
 <div id="staffMenu">
   <div id="staffBox">
     <h3>Персональное меню</h3>
@@ -196,7 +194,7 @@ header{
 </div>
 
 <script>
-/* ================= STATE ================= */
+/* STATE */
 const body = document.body;
 const listCooking = document.getElementById('listCooking');
 const listReady   = document.getElementById('listReady');
@@ -204,7 +202,7 @@ const listReady   = document.getElementById('listReady');
 let orders = new Map();
 let terminals = JSON.parse(localStorage.getItem('terminals') || '[]');
 
-/* ================= THEME ================= */
+/* THEME */
 const themeToggle = document.getElementById('themeToggle');
 const savedTheme = localStorage.getItem('theme');
 
@@ -223,7 +221,7 @@ themeToggle.onchange = ()=>{
   }
 };
 
-/* ================= STAFF MENU ================= */
+/* STAFF MENU */
 const logo = document.getElementById('logo');
 const staffMenu = document.getElementById('staffMenu');
 const terminalInput = document.getElementById('terminalInput');
@@ -264,7 +262,6 @@ resetBtn.onclick = ()=>{
   refresh();
 };
 
-/* ================= UI ================= */
 function renderTerminals(){
   terminalList.innerHTML='';
   terminals.forEach(t=>{
@@ -283,11 +280,21 @@ function renderTerminals(){
   });
 }
 
+/* ORDERS */
 function renderOrder(num){
   const d=document.createElement('div');
   d.className='order';
   d.textContent=num;
   return d;
+}
+
+function speakOrder(num){
+  try{
+    const msg = new SpeechSynthesisUtterance(`Заказ номер ${num} готов`);
+    msg.lang = 'ru-RU';
+    speechSynthesis.cancel();
+    speechSynthesis.speak(msg);
+  }catch(e){}
 }
 
 function refresh(){
@@ -304,12 +311,13 @@ function refresh(){
     }
     if(o.status === 'completed' || o.status === 'ready'){
       listReady.appendChild(renderOrder(o.orderNumber));
+      speakOrder(o.orderNumber);
       setTimeout(()=>refresh(),120000);
     }
   }
 }
 
-/* ================= FIREBASE ================= */
+/* FIREBASE */
 firebase.initializeApp({
   apiKey: "AIzaSyABvY_6cHonbLvdBj5cYMSheJDLMd_-bNw",
   authDomain: "app-fairpay.firebaseapp.com",
