@@ -308,11 +308,12 @@ function refreshUI(){
 
   for(const [key, order] of orders.entries()){
     if(!myTerminals.includes(order.terminalId)) continue;
-
-    if(order.status === 'completed'){
+    
+    const status = order.status.toLowerCase();
+    if(status === 'completed'){
       listReady.appendChild(renderOrderCard(key, order));
       readyCount++;
-    } else if((order.status === 'pending') || (order.status === 'cooking')){
+    } else if(status === 'pending' || status === 'cooking'){
       listCooking.appendChild(renderOrderCard(key, order));
       cookingCount++;
     }
