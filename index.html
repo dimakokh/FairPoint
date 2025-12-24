@@ -15,315 +15,200 @@
   --red:#c62828;
   --green:#2e7d32;
   --text:#ffffff;
-  --muted:#aaaaaa;
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+  font-family: Inter, system-ui, Arial;
 }
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text)}
+.app{height:100vh;display:flex;flex-direction:column}
 
-*{ box-sizing:border-box }
-
-html,body{
-  margin:0;
-  height:100%;
-  background:var(--bg);
-  color:var(--text);
-}
-
-.app{
-  height:100vh;
-  display:flex;
-  flex-direction:column;
-}
-
-/* HEADER */
 header{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:16px 24px;
-  border-bottom:1px solid #222;
+  display:flex;align-items:center;gap:12px;
+  padding:16px 24px;border-bottom:1px solid #222
 }
+#logo{width:48px;height:48px;cursor:pointer}
+.header-title{font-size:20px;font-weight:700}
 
-#logo{
-  width:48px;
-  height:48px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-}
-
-/* сюда ты вставляешь SVG */
-#logo svg{
-  width:100%;
-  height:100%;
-}
-
-.header-title{
-  font-size:20px;
-  font-weight:700;
-}
-
-/* BOARD */
-.board{
-  flex:1;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-}
-
-.column{
-  display:flex;
-  flex-direction:column;
-}
-
-.column-header{
-  padding:14px;
-  font-size:18px;
-  font-weight:700;
-  text-align:center;
-}
-
-.column.cooking .column-header{
-  background:var(--red);
-}
-
-.column.ready .column-header{
-  background:var(--green);
-}
-
+.board{flex:1;display:grid;grid-template-columns:1fr 1fr}
+.column{display:flex;flex-direction:column}
+.column-header{padding:14px;font-size:18px;font-weight:700;text-align:center}
+.column.cooking .column-header{background:var(--red)}
+.column.ready .column-header{background:var(--green)}
 .list{
-  flex:1;
-  padding:20px;
-  display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(160px,1fr));
-  gap:16px;
+  flex:1;padding:20px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+  gap:16px
 }
-
-/* ORDER CARD */
 .order{
-  background:var(--card);
-  border-radius:16px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:36px;
-  font-weight:800;
-  height:120px;
-  letter-spacing:2px;
+  background:var(--card);border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;font-weight:800;height:120px
 }
 
-/* персональное меню */
-.hidden{ display:none }
-
+/* STAFF */
 #staffMenu{
-  position:fixed;
-  inset:0;
+  position:fixed;inset:0;
   background:rgba(0,0,0,0.85);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
+  display:none;align-items:center;justify-content:center;
+  z-index:999
 }
-
 #staffBox{
-  background:#111;
-  padding:20px;
-  border-radius:14px;
-  width:320px;
+  background:#111;padding:20px;border-radius:14px;width:320px
 }
-
-#staffBox h3{
-  margin:0 0 12px 0;
-}
-
-#staffBox input{
-  width:100%;
-  padding:10px;
-  margin-bottom:10px;
-  border-radius:8px;
-  border:none;
-}
-
-#staffBox button{
-  width:100%;
-  padding:10px;
-  border-radius:8px;
-  border:none;
-  background:#333;
-  color:#fff;
-  cursor:pointer;
-  margin-bottom:8px;
-}
-
-#terminalList{
-  margin-top:10px;
-  font-size:14px;
-}
-
-#terminalList div{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:6px;
-}
+#staffBox h3{margin:0 0 12px}
+#staffBox input{width:100%;padding:10px;margin-bottom:8px;border-radius:8px;border:none}
+#staffBox button{width:100%;padding:10px;margin-bottom:8px;border-radius:8px;border:none;background:#333;color:#fff}
+#terminalList div{display:flex;justify-content:space-between;margin-top:6px}
 </style>
 </head>
 <body>
 
 <div class="app">
+<header>
+  <div id="logo"><!-- SVG ТУТ --></div>
+  <div class="header-title">FireKiosk — показ заказов</div>
+</header>
 
-  <header>
-    <div id="logo">
-      <!-- SVG ЛОГОТИП ТУТ -->
-    </div>
-    <div class="header-title">FireKiosk — показ заказов</div>
-  </header>
-
-  <div class="board">
-    <div class="column cooking">
-      <div class="column-header">Готовится</div>
-      <div class="list" id="listCooking"></div>
-    </div>
-    <div class="column ready">
-      <div class="column-header">Готово</div>
-      <div class="list" id="listReady"></div>
-    </div>
+<div class="board">
+  <div class="column cooking">
+    <div class="column-header">Готовится</div>
+    <div class="list" id="listCooking"></div>
+  </div>
+  <div class="column ready">
+    <div class="column-header">Готово</div>
+    <div class="list" id="listReady"></div>
   </div>
 </div>
+</div>
 
-<!-- ПЕРСОНАЛ -->
-<div id="staffMenu" class="hidden">
+<div id="staffMenu">
   <div id="staffBox">
     <h3>Привязка терминалов</h3>
     <input id="terminalInput" placeholder="ID терминала">
     <button id="addTerminal">Добавить</button>
+    <button id="resetTerminals">Reset</button>
     <div id="terminalList"></div>
     <button id="closeStaff">Закрыть</button>
   </div>
 </div>
 
 <script>
+/* ===== STATE ===== */
 const AUTO_EXPIRE = 2*60*1000;
+let orders=new Map();
+let timers=new Map();
+let terminals=[];
 
-const listCooking = document.getElementById('listCooking');
-const listReady = document.getElementById('listReady');
-
-let orders = new Map();
-let timers = new Map();
-let terminals = JSON.parse(localStorage.getItem('terminals')||'[]');
-
-/* ===== STAFF MENU ===== */
-const logo = document.getElementById('logo');
-const staffMenu = document.getElementById('staffMenu');
-const terminalInput = document.getElementById('terminalInput');
-const addTerminal = document.getElementById('addTerminal');
-const terminalList = document.getElementById('terminalList');
-const closeStaff = document.getElementById('closeStaff');
-
-let clicks=0;
-logo.onclick=()=>{
-  clicks++;
-  setTimeout(()=>clicks=0,400);
-  if(clicks>=3){
-    staffMenu.classList.remove('hidden');
-    renderTerminals();
-    clicks=0;
-  }
-};
-
-closeStaff.onclick=()=>staffMenu.classList.add('hidden');
-
-addTerminal.onclick=()=>{
-  const id=terminalInput.value.trim();
-  if(id && !terminals.includes(id)){
-    terminals.push(id);
-    localStorage.setItem('terminals',JSON.stringify(terminals));
-    terminalInput.value='';
-    renderTerminals();
-  }
-};
-
-function renderTerminals(){
-  terminalList.innerHTML='';
-  terminals.forEach(t=>{
-    const row=document.createElement('div');
-    row.textContent=t;
-    const del=document.createElement('button');
-    del.textContent='×';
-    del.onclick=()=>{
-      terminals=terminals.filter(x=>x!==t);
-      localStorage.setItem('terminals',JSON.stringify(terminals));
-      renderTerminals();
-      refresh();
-    };
-    row.appendChild(del);
-    terminalList.appendChild(row);
-  });
+/* ===== LOAD TERMINALS ===== */
+function loadTerminals(){
+  terminals=JSON.parse(localStorage.getItem('firekiosk_terminals')||'[]');
+}
+function saveTerminals(){
+  localStorage.setItem('firekiosk_terminals',JSON.stringify(terminals));
 }
 
 /* ===== UI ===== */
-function renderOrder(num){
-  const d=document.createElement('div');
-  d.className='order';
-  d.textContent=num;
-  return d;
-}
+const listCooking=document.getElementById('listCooking');
+const listReady=document.getElementById('listReady');
 
 function refresh(){
   listCooking.innerHTML='';
   listReady.innerHTML='';
   if(terminals.length===0) return;
 
-  for(const [key,o] of orders){
+  for(const [k,o] of orders){
     if(!terminals.includes(o.terminalId)) continue;
     if(o.status==='waiting_for_cash') continue;
 
-    if(o.status==='cooking'){
-      listCooking.appendChild(renderOrder(o.orderNumber));
-    }
-    if(o.status==='completed' || o.status==='ready'){
-      listReady.appendChild(renderOrder(o.orderNumber));
+    const el=document.createElement('div');
+    el.className='order';
+    el.textContent=o.orderNumber;
+
+    if(o.status==='cooking') listCooking.appendChild(el);
+    if(o.status==='completed'||o.status==='ready'){
+      listReady.appendChild(el);
+      if(!timers.has(k)){
+        timers.set(k,setTimeout(()=>{
+          orders.delete(k);
+          refresh();
+        },AUTO_EXPIRE));
+      }
     }
   }
 }
 
-function scheduleRemove(key){
-  if(timers.has(key)) return;
-  timers.set(key,setTimeout(()=>{
-    orders.delete(key);
-    refresh();
-  },AUTO_EXPIRE));
+/* ===== STAFF MENU ===== */
+const staffMenu=document.getElementById('staffMenu');
+const terminalInput=document.getElementById('terminalInput');
+const terminalList=document.getElementById('terminalList');
+
+function renderTerminals(){
+  terminalList.innerHTML='';
+  terminals.forEach(t=>{
+    const row=document.createElement('div');
+    row.textContent=t;
+    const x=document.createElement('button');
+    x.textContent='×';
+    x.onclick=()=>{
+      terminals=terminals.filter(v=>v!==t);
+      saveTerminals();
+      renderTerminals();
+      refresh();
+    };
+    row.appendChild(x);
+    terminalList.appendChild(row);
+  });
 }
+
+document.getElementById('addTerminal').onclick=()=>{
+  const id=terminalInput.value.trim();
+  if(id && !terminals.includes(id)){
+    terminals.push(id);
+    saveTerminals();
+    terminalInput.value='';
+    renderTerminals();
+    refresh();
+  }
+};
+
+document.getElementById('resetTerminals').onclick=()=>{
+  terminals=[];
+  saveTerminals();
+  renderTerminals();
+  refresh();
+};
+
+document.getElementById('closeStaff').onclick=()=>{
+  staffMenu.style.display='none';
+};
+
+/* triple click */
+let clicks=0;
+document.getElementById('logo').onclick=()=>{
+  clicks++;
+  setTimeout(()=>clicks=0,400);
+  if(clicks===3){
+    staffMenu.style.display='flex';
+    renderTerminals();
+    clicks=0;
+  }
+};
 
 /* ===== FIREBASE ===== */
 firebase.initializeApp({
   apiKey:"AIzaSyCSw_6Lv22XH-jwK3NN6B6QHH_UCa6Sn1s",
-  authDomain:"fairpay-fast.firebaseapp.com",
   databaseURL:"https://fairpay-fast-default-rtdb.firebaseio.com",
   projectId:"fairpay-fast"
 });
 
-const ref=firebase.database().ref('orders');
-
-ref.on('child_added',s=>{
-  orders.set(s.key,s.val());
-  if(s.val().status==='completed'||s.val().status==='ready'){
-    scheduleRemove(s.key);
-  }
+firebase.database().ref('orders')
+.on('value',snap=>{
+  orders.clear();
+  snap.forEach(s=>orders.set(s.key,s.val()));
   refresh();
 });
 
-ref.on('child_changed',s=>{
-  orders.set(s.key,s.val());
-  if(s.val().status==='completed'||s.val().status==='ready'){
-    scheduleRemove(s.key);
-  }
-  refresh();
-});
-
-ref.on('child_removed',s=>{
-  orders.delete(s.key);
-  refresh();
-});
+/* INIT */
+loadTerminals();
+refresh();
 </script>
-
 </body>
 </html>
