@@ -312,7 +312,7 @@ function refreshUI(){
     if(order.status === 'completed'){
       listReady.appendChild(renderOrderCard(key, order));
       readyCount++;
-    } else if((order.status === 'pending') && (order.status === 'cooking')){
+    } else if((order.status === 'pending') || (order.status === 'cooking')){
       listCooking.appendChild(renderOrderCard(key, order));
       cookingCount++;
     }
