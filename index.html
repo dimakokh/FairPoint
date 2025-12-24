@@ -5,29 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Kitchen Board — Показ заказов</title>
 
-<!-- Firebase (compat build for simple realtime DB usage) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
 <style>
   :root{
-    --bg:#10060a; /* very dark */
-    --card:#1f0b0d;
-    --muted:#bfb5b7;
-    --accent:#7B1F24; /* burgundy base */
-    --accent-light:#B94A4F; /* lighter red */
-    --accent-soft:#9B3A66; /* purple-ish */
-    --ready:#C24B4F; /* light burgundy */
-    --glass: rgba(255,255,255,0.03);
-    --shadow: 0 6px 18px rgba(0,0,0,0.6);
+    --bg:#ffffff; /* светлая тема */
+    --card:#f9f9f9;
+    --muted:#555;
+    --accent:#7B1F24;
+    --accent-light:#B94A4F;
+    --accent-soft:#9B3A66;
+    --ready:#4CAF50; /* зелёный для готовых */
+    --glass: rgba(0,0,0,0.03);
+    --shadow: 0 6px 18px rgba(0,0,0,0.1);
     font-family: Inter, "Segoe UI", Roboto, "Helvetica Neue", Arial;
   }
 
   html,body{
     height:100%;
     margin:0;
-    background: linear-gradient(180deg, #0f0710 0%, #11060a 60%);
-    color: #fff;
+    background: #fff;
+    color: #000;
     -webkit-font-smoothing:antialiased;
     -moz-osx-font-smoothing:grayscale;
   }
@@ -48,31 +47,13 @@
   .logo{
     width:56px;height:56px;border-radius:12px;
     background: linear-gradient(135deg,var(--accent) 0%, var(--accent-soft) 60%);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.5), inset 0 -6px 18px rgba(255,255,255,0.03);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
     display:flex;align-items:center;justify-content:center;font-weight:700;
-    font-size:20px;
-    cursor:pointer;
+    font-size:20px; cursor:pointer;
   }
 
   h1{ font-size:20px; margin:0; letter-spacing:0.6px;}
   p.lead{ margin:0;color:var(--muted); font-size:13px }
-
-  .controls{
-    margin-left:auto;
-    display:flex;
-    gap:10px;
-    align-items:center;
-  }
-
-  .btn{
-    padding:10px 14px;border-radius:10px;border:0;background:var(--glass);
-    color:var(--muted); cursor:pointer;
-    backdrop-filter: blur(4px);
-  }
-  .btn.primary{
-    background: linear-gradient(90deg,var(--accent) 0%,var(--accent-soft) 90%);
-    color: #fff; font-weight:600; box-shadow: 0 6px 18px rgba(123,31,36,0.25);
-  }
 
   .board{
     display:grid;
@@ -82,10 +63,10 @@
   }
 
   .column{
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    background: var(--card);
     border-radius:14px; padding:14px; box-shadow:var(--shadow);
     min-height:300px;
-    border: 1px solid rgba(255,255,255,0.03);
+    border: 1px solid rgba(0,0,0,0.1);
   }
 
   .col-title{
@@ -93,7 +74,7 @@
   }
   .col-title h2{ margin:0;font-size:16px; }
   .col-count{
-    margin-left:auto; font-weight:700; background:rgba(255,255,255,0.04);
+    margin-left:auto; font-weight:700; background:rgba(0,0,0,0.05);
     padding:6px 10px;border-radius:10px;font-size:13px;
   }
 
@@ -101,58 +82,50 @@
 
   .card{
     display:flex; gap:12px; align-items:center;
-    padding:12px;border-radius:12px;background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(255,255,255,0.02));
-    border: 1px solid rgba(255,255,255,0.03);
+    padding:12px;border-radius:12px;background: #fff;
+    border: 1px solid rgba(0,0,0,0.1);
     transition: transform .18s ease, box-shadow .18s ease, opacity .3s ease;
   }
-  .card:hover{ transform: translateY(-6px); box-shadow: 0 16px 32px rgba(0,0,0,0.6) }
+  .card:hover{ transform: translateY(-4px); box-shadow: 0 12px 24px rgba(0,0,0,0.1) }
 
   .status-dot{ width:12px;height:12px;border-radius:50%;flex:0 0 12px; }
   .dot-cooking{ background: linear-gradient(180deg,var(--accent-light),var(--accent)); }
-  .dot-ready{ background: linear-gradient(180deg,var(--ready),var(--accent-soft)); }
+  .dot-ready{ background: linear-gradient(180deg,var(--ready),#80e27e); }
 
   .card-left{ display:flex; gap:12px; align-items:center; width:100%; }
   .order-number{
     min-width:92px;padding:8px 10px;border-radius:8px;font-weight:700;
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    background: rgba(0,0,0,0.05);
     text-align:center; font-size:18px;
-    color: #fff;
+    color: #000;
   }
   .details{ flex:1; }
-  .details .title{ font-size:16px; margin-bottom:6px; color:#fff; }
+  .details .title{ font-size:16px; margin-bottom:6px; color:#000; }
   .details .meta{ font-size:13px; color:var(--muted); }
 
   .card-actions{ display:flex; gap:8px; align-items:center; }
-  .small-btn{ padding:6px 8px;border-radius:8px;border:0; background:rgba(255,255,255,0.03); color:var(--muted); cursor:pointer }
+  .small-btn{ padding:6px 8px;border-radius:8px;border:0; background:rgba(0,0,0,0.05); color:var(--muted); cursor:pointer }
   .small-btn.strong{ background: linear-gradient(90deg,var(--accent-light),var(--accent)); color:#fff; font-weight:600 }
 
-  /* ready highlight */
-  .card.ready{ border-left:4px solid var(--ready); box-shadow: 0 8px 30px rgba(178,70,74,0.12) }
+  .card.ready{ border-left:4px solid var(--ready); box-shadow: 0 8px 20px rgba(0,128,0,0.12) }
 
-  /* responsive */
   @media (max-width:900px){
     .board{ grid-template-columns: 1fr; }
   }
 
-  /* small helper */
-  .muted{ color:var(--muted); font-size:13px }
-  .big{ font-size:22px; font-weight:700; color:#fff }
-
-  /* staff menu */
-  #staffMenu{
-    display:none; 
-    position:absolute; 
-    top:100px; 
-    left:50%; 
-    transform:translateX(-50%);
-    background:#fff; 
-    color:#000; 
-    padding:20px; 
-    border-radius:12px; 
-    z-index:1000; 
-    box-shadow:0 4px 16px rgba(0,0,0,0.3);
+  /* Персональное меню скрыто по умолчанию */
+  #personalMenu{
+    display:none;
+    position: fixed;
+    top: 20px; right: 20px;
+    width: 300px; background: #fff; border: 1px solid #ccc;
+    border-radius: 12px; padding: 12px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+    z-index: 999;
   }
-  #staffMenu input{ margin-right:10px; padding:4px; border-radius:6px; border:1px solid #aaa; }
+  #personalMenu h3{ margin-top:0; font-size:16px; }
+  #personalMenu ul{ padding-left:20px; }
+  #personalMenu li{ margin-bottom:6px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -161,10 +134,7 @@
       <div class="logo" id="logo">KB</div>
       <div>
         <h1>Kitchen Board — Показ заказов</h1>
-        <p class="lead">Две колонки: <strong>Готовится</strong> и <strong>Готово</strong>. Цвета: бордово-фиолетовая палитра.</p>
-      </div>
-      <div class="controls">
-        <!-- Все кнопки убраны по твоему запросу -->
+        <p class="lead">Две колонки: <strong>Готовится</strong> и <strong>Готово</strong>.</p>
       </div>
     </header>
 
@@ -187,20 +157,17 @@
     </div>
   </div>
 
-  <!-- персональное меню -->
-  <div id="staffMenu">
+  <div id="personalMenu">
     <h3>Персональное меню</h3>
-    <p>Привязка терминалов (через запятую):</p>
-    <input type="text" id="terminalsInput" placeholder="T-101,T-102"/>
-    <button id="saveTerminals">Сохранить</button>
+    <input type="text" id="terminalInput" placeholder="ID терминала" />
+    <button id="addTerminalBtn">Добавить терминал</button>
+    <ul id="terminalList"></ul>
   </div>
 
 <script>
-const AUTO_EXPIRE_MS = 2 * 60 * 1000; // 2 минуты
-let demoMode = false;
-let firebaseEnabled = true;
-let orders = new Map(); 
-let timersExpire = new Map(); 
+const AUTO_EXPIRE_MS = 2*60*1000;
+let orders = new Map();
+let timersExpire = new Map();
 
 // UI refs
 const listCooking = document.getElementById('listCooking');
@@ -208,6 +175,58 @@ const listReady = document.getElementById('listReady');
 const countCooking = document.getElementById('countCooking');
 const countReady = document.getElementById('countReady');
 
+// Персональное меню
+const logo = document.getElementById('logo');
+const personalMenu = document.getElementById('personalMenu');
+const terminalInput = document.getElementById('terminalInput');
+const addTerminalBtn = document.getElementById('addTerminalBtn');
+const terminalList = document.getElementById('terminalList');
+
+let clickCount = 0;
+let clickTimer = null;
+
+// Сохранение привязанных терминалов через localStorage
+let myTerminals = JSON.parse(localStorage.getItem('myTerminals') || '[]');
+
+function saveTerminals(){
+  localStorage.setItem('myTerminals', JSON.stringify(myTerminals));
+}
+
+// отображение списка терминалов
+function refreshTerminalsUI(){
+  terminalList.innerHTML = '';
+  myTerminals.forEach(t=>{
+    const li = document.createElement('li');
+    li.textContent = t + ' ✖';
+    li.onclick = ()=> { myTerminals = myTerminals.filter(x=>x!==t); saveTerminals(); refreshTerminalsUI(); refreshUI(); };
+    terminalList.appendChild(li);
+  });
+}
+
+// открыть персональное меню по тройному клику
+logo.addEventListener('click', ()=>{
+  clickCount++;
+  if(clickTimer) clearTimeout(clickTimer);
+  clickTimer = setTimeout(()=> clickCount=0, 600);
+  if(clickCount>=3){
+    personalMenu.style.display = personalMenu.style.display==='none'?'block':'none';
+    refreshTerminalsUI();
+    clickCount=0;
+  }
+});
+
+// добавить терминал
+addTerminalBtn.addEventListener('click', ()=>{
+  const val = terminalInput.value.trim();
+  if(val && !myTerminals.includes(val)){
+    myTerminals.push(val);
+    saveTerminals();
+    refreshTerminalsUI();
+    terminalInput.value='';
+  }
+});
+
+// Firebase
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCSw_6Lv22XH-jwK3NN6B6QHH_UCa6Sn1s",
   authDomain: "fairpay-fast.firebaseapp.com",
@@ -218,46 +237,36 @@ const FIREBASE_CONFIG = {
   appId: "1:764987626490:web:e3451c8162f6992449ca43"
 };
 
-// Firebase setup
-let dbRef = null;
-if (FIREBASE_CONFIG && typeof FIREBASE_CONFIG === 'object') {
-  try {
-    firebase.initializeApp(FIREBASE_CONFIG);
-    const db = firebase.database();
-    dbRef = db.ref('orders');
-    firebaseEnabled = true;
-    demoMode = false;
-    console.info('Firebase enabled, listening to /orders');
-  } catch (e) {
-    console.warn('Firebase init failed', e);
-    firebaseEnabled = false;
-    demoMode = false;
-  }
-}
+let dbRef=null;
+let firebaseEnabled=false;
+
+try{
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const db = firebase.database();
+  dbRef = db.ref('orders');
+  firebaseEnabled = true;
+  console.info('Firebase enabled');
+}catch(e){ console.warn('Firebase init failed', e); }
 
 // helpers
 function el(tag, cls, inner){
   const d = document.createElement(tag);
-  if (cls) d.className = cls;
-  if (inner !== undefined) d.innerHTML = inner;
+  if(cls) d.className=cls;
+  if(inner!==undefined) d.innerHTML=inner;
   return d;
 }
-
-function formatTime(ts){
-  const d = new Date(ts);
-  return d.toLocaleTimeString();
-}
+function formatTime(ts){ return new Date(ts).toLocaleTimeString(); }
 
 function renderOrderCard(key, order){
   const c = el('div','card');
   c.dataset.key = key;
-  if(order.status === 'completed') c.classList.add('ready');
+  if(order.status==='completed' || order.status==='ready') c.classList.add('ready');
 
   const left = el('div','card-left');
-  const dot = el('div','status-dot '+(order.status === 'completed' ? 'dot-ready' : 'dot-cooking'));
-  const num = el('div','order-number', `<div style="font-size:12px;color:var(--muted)">#</div>${order.orderNumber || key}`);
+  const dot = el('div','status-dot '+(order.status==='completed'?'dot-ready':'dot-cooking'));
+  const num = el('div','order-number', `<div style="font-size:12px;color:var(--muted)">#</div>${order.orderNumber||key}`);
   const details = el('div','details');
-  const title = el('div','title', `${order.items && order.items.length ? order.items.map(i=>i.name).join(', ') : 'Заказ'}`);
+  const title = el('div','title', `${order.items&&order.items.length?order.items.map(i=>i.name).join(', '):'Заказ'}`);
   const meta = el('div','meta', `Терминал: ${order.terminalId||'—'} • ${order.time?formatTime(order.time):''}`);
 
   details.appendChild(title);
@@ -267,9 +276,9 @@ function renderOrderCard(key, order){
   left.appendChild(details);
 
   const actions = el('div','card-actions');
-  if(order.status !== 'completed'){
+  if(order.status!=='completed'){
     const btnReady = el('button','small-btn strong','Пометить готовым');
-    btnReady.addEventListener('click', ()=> markReady(key));
+    btnReady.onclick = ()=> markReady(key);
     actions.appendChild(btnReady);
   }
 
@@ -278,172 +287,72 @@ function renderOrderCard(key, order){
   return c;
 }
 
-// персональное меню и терминалы
-let staffClicks = 0;
-const logo = document.getElementById('logo');
-const staffMenu = document.getElementById('staffMenu');
-let myTerminals = [];
-
-logo.addEventListener('click', ()=>{
-    staffClicks++;
-    if(staffClicks === 3){
-        staffMenu.style.display = 'block';
-        staffClicks = 0;
-    }
-});
-
-document.getElementById('saveTerminals').addEventListener('click', ()=>{
-    const val = document.getElementById('terminalsInput').value;
-    myTerminals = val.split(',').map(s=>s.trim()).filter(s=>s.length>0);
-    staffMenu.style.display = 'none';
-    refreshUI();
-});
-
 function refreshUI(){
-  listCooking.innerHTML = '';
-  listReady.innerHTML = '';
-  let cookingCount = 0, readyCount = 0;
-
-  if(myTerminals.length === 0) return;
-
+  listCooking.innerHTML=''; listReady.innerHTML='';
+  let cookingCount=0, readyCount=0;
   for(const [key, order] of orders.entries()){
-    if(!myTerminals.includes(order.terminalId)) continue;
-    
-    const status = order.status.toLowerCase();
-    if(status === 'completed'){
-      listReady.appendChild(renderOrderCard(key, order));
-      readyCount++;
-    } else if(status === 'pending' || status === 'cooking'){
+    if(!myTerminals.includes(order.terminalId)) continue; // фильтр по терминалам
+    if(order.status==='pending' || order.status==='cooking'){
       listCooking.appendChild(renderOrderCard(key, order));
       cookingCount++;
+    }else if(order.status==='completed'){
+      listReady.appendChild(renderOrderCard(key, order));
+      readyCount++;
     }
   }
-
-  countCooking.textContent = cookingCount;
-  countReady.textContent = readyCount;
+  countCooking.textContent=cookingCount;
+  countReady.textContent=readyCount;
 }
 
 function markReady(key){
   const order = orders.get(key);
   if(!order) return;
-  if(firebaseEnabled && dbRef){
-    firebase.database().ref('orders').child(key).update({ status: 'completed', timeReady: Date.now() })
-      .catch(err=> console.warn('Update failed', err));
-  } else {
-    order.status = 'completed';
-    order.timeReady = Date.now();
-    orders.set(key, order);
-    onOrderUpdated(key, order);
-  }
+  order.status='completed';
+  order.timeReady = Date.now();
+  orders.set(key, order);
+  refreshUI();
+  handleBecameReady(key, order);
+  if(firebaseEnabled && dbRef) dbRef.child(key).update({status:'completed', timeReady:Date.now()}).catch(()=>{});
 }
 
 function handleBecameReady(key, order){
-  const spoken = `Заказ номер ${order.orderNumber || key} готов`;
-  speakText(spoken);
-
-  clearExpireTimer(key);
-  const t = setTimeout(()=>{
-      orders.delete(key);
-      refreshUI();
-  }, AUTO_EXPIRE_MS);
-  timersExpire.set(key, t);
-}
-
-function clearExpireTimer(key){
-  const t = timersExpire.get(key);
-  if(t){ clearTimeout(t); timersExpire.delete(key); }
-}
-
-function speakText(text){
+  // озвучка
   try{
-    beep();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'ru-RU';
-    u.rate = 1;
-    u.volume = 1;
+    const u = new SpeechSynthesisUtterance(`Заказ номер ${order.orderNumber||key} готов`);
+    u.lang='ru-RU';
     speechSynthesis.cancel();
-    setTimeout(()=> speechSynthesis.speak(u), 220);
+    setTimeout(()=> speechSynthesis.speak(u), 200);
   }catch(e){}
+  // автоудаление через 2 минуты
+  clearExpireTimer(key);
+  const t=setTimeout(()=>{
+    orders.delete(key);
+    refreshUI();
+  }, AUTO_EXPIRE_MS);
+  timersExpire.set(key,t);
 }
 
-function beep(){
-  try{
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = 'sine';
-    o.frequency.value = 880;
-    g.gain.value = 0.08;
-    o.connect(g); g.connect(ctx.destination);
-    o.start();
-    setTimeout(()=> { o.stop(); ctx.close(); }, 120);
-  }catch(e){}
-}
+function clearExpireTimer(key){ const t=timersExpire.get(key); if(t){clearTimeout(t); timersExpire.delete(key);} }
 
 // Firebase listeners
 if(firebaseEnabled && dbRef){
-  dbRef.on('child_added', snapshot => {
-    const key = snapshot.key;
-    const val = snapshot.val();
-    orders.set(key, val);
+  dbRef.on('child_added', snapshot=>{
+    const key=snapshot.key; const val=snapshot.val();
+    orders.set(key,val);
     refreshUI();
-    if(val && val.status === 'completed') handleBecameReady(key, val);
   });
-
-  dbRef.on('child_changed', snapshot => {
-    const key = snapshot.key;
-    const val = snapshot.val();
-    const prev = orders.get(key);
-    orders.set(key, val);
+  dbRef.on('child_changed', snapshot=>{
+    const key=snapshot.key; const val=snapshot.val();
+    orders.set(key,val);
     refreshUI();
-    const wasReady = prev && prev.status === 'completed';
-    const isReady = val && val.status === 'completed';
-    if(!wasReady && isReady) handleBecameReady(key, val);
   });
-
-  dbRef.on('child_removed', snapshot => {
-    const key = snapshot.key;
+  dbRef.on('child_removed', snapshot=>{
+    const key=snapshot.key;
     orders.delete(key);
     clearExpireTimer(key);
     refreshUI();
   });
 }
-
-// demo utilities
-function addDemoOrder(){
-  const key = 'demo_'+Date.now()+'_'+Math.floor(Math.random()*999);
-  const order = {
-    orderNumber: (Math.random()<0.5? ('C'+String(Math.floor(Math.random()*10000)).padStart(4,'0')) : String(Math.floor(Math.random()*10000)).padStart(4,'0')),
-    status: 'pending',
-    time: Date.now(),
-    terminalId: 'T'+(100+Math.floor(Math.random()*900)),
-    items: [{name:'Чизбургер'},{name:'Лимонад'}]
-  };
-  orders.set(key, order);
-  refreshUI();
-}
-
-function demoMarkReadyRandom(){
-  for(const [k,v] of orders.entries()){
-    if(v.status === 'pending'){
-      v.status='completed';
-      v.timeReady = Date.now();
-      orders.set(k, v);
-      onOrderUpdated(k, v);
-      handleBecameReady(k,v);
-      break;
-    }
-  }
-}
-
-function onOrderUpdated(key, order){
-  refreshUI();
-  if(order.status === 'completed') handleBecameReady(key, order);
-}
-
-// expose console helpers
-window._kitchen = { orders, addDemoOrder, demoMarkReadyRandom, markReady };
-
 </script>
 </body>
 </html>
