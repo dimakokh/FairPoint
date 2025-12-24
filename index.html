@@ -253,9 +253,13 @@ function refresh(){
 
 /* ================= FIREBASE ================= */
 firebase.initializeApp({
-  apiKey:"AIzaSyCSw_6Lv22XH-jwK3NN6B6QHH_UCa6Sn1s",
-  databaseURL:"https://fairpay-fast-default-rtdb.firebaseio.com",
-  projectId:"fairpay-fast"
+  apiKey: "AIzaSyABvY_6cHonbLvdBj5cYMSheJDLMd_-bNw",
+  authDomain: "app-fairpay.firebaseapp.com",
+  databaseURL: "https://app-fairpay-default-rtdb.firebaseio.com",
+  projectId: "app-fairpay",
+  storageBucket: "app-fairpay.firebasestorage.app",
+  messagingSenderId: "29576302334",
+  appId: "1:29576302334:web:0e559f804bf62c59981faf"
 });
 
 const ref = firebase.database().ref('orders');
