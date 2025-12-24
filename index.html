@@ -295,7 +295,7 @@ function refreshUI(){
     if(order.status==='pending' || order.status==='cooking'){
       listCooking.appendChild(renderOrderCard(key, order));
       cookingCount++;
-    }else if(order.status==='completed'){
+    }else if(order.status === 'completed' || order.status === 'ready' || order.status === 'cooking_done'){
       listReady.appendChild(renderOrderCard(key, order));
       readyCount++;
     }
