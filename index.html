@@ -3,487 +3,188 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>FairPoint — Касса (Наличные)</title>
+<title>FairPoint — Касса / Кухня</title>
 
-<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
 <style>
-  :root{
-    --bg:#f7f7f8;
-    --card:#ffffff;
-    --muted:#666;
-    --accent:#ff7a45;
-    --accent-dark:#d9480f;
-    --success:#52c41a;
-    --danger:#ff4d4f;
-    --shadow: 0 6px 18px rgba(0,0,0,0.08);
-    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
-    color-scheme: light;
-  }
+:root{
+  --bg:#f7f7f8;
+  --card:#ffffff;
+  --muted:#666;
+  --accent:#ff7a45;
+  --accent-dark:#d9480f;
+  --success:#52c41a;
+  --danger:#ff4d4f;
+  --packing:#1677ff;
+  --shadow:0 6px 18px rgba(0,0,0,0.08);
+  font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;
+}
+html,body{margin:0;height:100%;background:var(--bg);}
+.wrap{max-width:1200px;margin:20px auto;padding:18px;}
+header{display:flex;align-items:center;gap:16px;}
+.logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800}
+.top-controls{margin-left:auto;display:flex;gap:12px;align-items:center}
+.panel{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow)}
+.grid{display:grid;grid-template-columns:1fr 320px;gap:12px}
+.list{display:flex;flex-direction:column;gap:8px;max-height:65vh;overflow:auto}
+.req{display:flex;justify-content:space-between;gap:12px;padding:12px;border-radius:10px;border:1px solid #eee;cursor:pointer}
+.code{font-weight:800;font-size:18px;background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#fff;padding:6px 10px;border-radius:8px}
+.amount{font-weight:800}
+.badge{padding:4px 8px;border-radius:6px;font-size:12px}
+.badge.cooking{background:#fff3e0;color:#d9480f}
+.badge.packing{background:#e6f4ff;color:#1677ff}
+.badge.ready{background:#f6ffed;color:#389e0d}
+button{padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:700}
+button.gray{background:#eee}
+button.red{background:var(--danger);color:#fff}
+button.accent{background:var(--accent);color:#fff}
+.empty{text-align:center;color:var(--muted);padding:24px}
 
-  html,body{height:100%; margin:0; background:var(--bg); color:#111;}
+.switch{display:flex;gap:6px}
+.switch button{background:#eee}
+.switch button.active{background:var(--accent);color:#fff}
 
-  .wrap{max-width:1200px; margin:20px auto; padding:18px;}
-
-  header{display:flex; align-items:center; gap:16px; margin-bottom:10px;}
-  .logo{width:56px; height:56px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent-dark)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:18px;}
-  h1{font-size:20px; margin:0;}
-  .top-controls{margin-left:auto; display:flex; gap:8px; align-items:center;}
-
-  .panel{background:var(--card); border-radius:12px; padding:12px; box-shadow:var(--shadow);}
-
-  /* main layout */
-  .grid{display:grid; grid-template-columns: 1fr 320px; gap:12px;}
-
-  /* left: list of cash requests */
-  .requests{display:flex; flex-direction:column; gap:12px;}
-  .requests .panel{flex:1; display:flex; flex-direction:column; gap:8px;}
-  .list{display:flex; flex-direction:column; gap:8px; max-height:65vh; overflow:auto; padding:4px;}
-  .req{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; border-radius:10px; background:#fff; border:1px solid #eee;}
-  .req .left{display:flex; gap:12px; align-items:center;}
-  .code{font-weight:800; font-size:18px; background:linear-gradient(90deg,var(--accent),var(--accent-dark)); color:#fff; padding:6px 10px; border-radius:8px;}
-  .meta{color:var(--muted); font-size:13px;}
-  .amount{font-weight:800; font-size:16px;}
-  .badge{font-size:12px; padding:6px 8px; border-radius:8px; background:#fff; border:1px solid #eee;}
-
-  /* right: details / search */
-  .sidebar{display:flex; flex-direction:column; gap:12px;}
-  .search-row{display:flex; gap:8px;}
-  input[type="text"]{padding:10px; border-radius:8px; border:1px solid #ddd; flex:1;}
-  button{padding:10px 12px; border-radius:8px; border:none; cursor:pointer; background:var(--accent); color:#fff; font-weight:700;}
-  button.gray{background:#f0f0f0; color:#111; border:1px solid #e6e6e6;}
-  button.red{background:var(--danger);}
-
-  /* modal */
-  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:999;}
-  .modal{width:520px; background:#fff; border-radius:12px; padding:18px; box-shadow:0 12px 36px rgba(0,0,0,0.25);}
-  .modal h3{margin:0 0 8px 0;}
-  .modal .items{margin-top:10px; border-top:1px dashed #eee; padding-top:8px; max-height:240px; overflow:auto;}
-  .modal .row{display:flex; justify-content:space-between; gap:8px; margin-bottom:6px;}
-  .modal .actions{display:flex; gap:8px; margin-top:12px; justify-content:flex-end;}
-
-  /* small helpers */
-  .muted{color:var(--muted); font-size:13px;}
-  .empty{padding:24px; text-align:center; color:var(--muted);}
+/* FireDome */
+#fireDome{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  color:#fff;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  font-size:42px;
+  font-weight:900;
+  z-index:2000;
+}
 </style>
 </head>
+
 <body>
+<div id="fireDome">🔥 Твой заказ здесь</div>
+
 <div class="wrap">
-  <header>
-    <div class="logo">FP</div>
-    <div>
-      <h1>FairPoint — Касса (Наличные)</h1>
-      <div class="muted">Здесь кассир принимает наличные — подтверждай или отклоняй заявки.</div>
+<header>
+  <div class="logo">FP</div>
+  <h1>FairPoint</h1>
+  <div class="top-controls">
+    <div class="switch">
+      <button id="modeCash" class="active">Касса</button>
+      <button id="modeKitchen">Кухня</button>
     </div>
+  </div>
+</header>
 
-    <div class="top-controls">
-      <div class="muted">Авто-открытие новых заявок включено</div>
-    </div>
-  </header>
+<div class="grid">
+  <div class="panel">
+    <div style="font-weight:800;margin-bottom:8px" id="listTitle">Ожидают наличной оплаты</div>
+    <div class="list" id="ordersList"></div>
+    <div class="empty" id="emptyText">Нет заказов</div>
+  </div>
 
-  <div class="grid">
-    <!-- left column: list -->
-    <div class="requests panel">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="font-weight:800">Ожидающие оплаты наличными</div>
-        <div class="muted">Новые автоматически открываются</div>
-      </div>
-
-      <div class="list" id="requestsList">
-        <!-- items will be injected here -->
-      </div>
-
-      <div id="noRequests" class="empty">Список пуст — новых заявок нет.</div>
-    </div>
-
-    <!-- right column: search / manual -->
-    <div class="sidebar">
-      <div class="panel">
-        <div style="font-weight:800; margin-bottom:8px;">Поиск по коду</div>
-        <div class="search-row">
-          <input id="searchInput" type="text" placeholder="Введите код заказа (пример: 0022)" />
-          <button id="searchBtn">Найти</button>
-        </div>
-        <div id="searchResult" style="margin-top:10px;"></div>
-      </div>
-
-      <div class="panel">
-        <div style="font-weight:800; margin-bottom:8px;">История действий кассира</div>
-        <div id="actionsLog" style="max-height:28vh; overflow:auto; font-size:13px; color:var(--muted);"></div>
-      </div>
-    </div>
+  <div class="panel">
+    <div style="font-weight:800">Лог</div>
+    <div id="log" style="font-size:13px;color:var(--muted)"></div>
   </div>
 </div>
-
-<!-- Modal -->
-<div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal" role="dialog" aria-modal="true">
-    <h3 id="modalTitle">Заявка наличными</h3>
-    <div id="modalCode" style="font-size:20px; font-weight:800; margin-top:6px;"></div>
-    <div style="margin-top:8px;">
-      <div class="row"><div class="muted">Сумма</div><div id="modalAmount" class="amount"></div></div>
-      <div class="row"><div class="muted">Терминал</div><div id="modalTerminal" class="muted"></div></div>
-      <div class="row"><div class="muted">Время</div><div id="modalTime" class="muted"></div></div>
-    </div>
-
-    <div class="items" id="modalItems"></div>
-
-    <div class="actions">
-      <button id="btnReject" class="gray">Отклонить</button>
-      <button id="btnExit" class="gray">Выйти</button>
-      <button id="btnConfirm" style="background:var(--accent); color:#fff;">Подтвердить</button>
-    </div>
-  </div>
 </div>
 
 <script>
-/*
-  FairPoint cashier app
-  - listens to Firebase /orders
-  - shows paymentType === "cash" && status === "waiting_for_cash"
-  - auto-opens modal on new matching order
-  - search by orderNumber
-  - confirm -> set status = "cooking", add confirmedBy/confirmedAt
-  - reject -> set rejectedByCashier = true, rejectedAt (keeps status waiting_for_cash)
-*/
-
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyABvY_6cHonbLvdBj5cYMSheJDLMd_-bNw",
-  authDomain: "app-fairpay.firebaseapp.com",
-  databaseURL: "https://app-fairpay-default-rtdb.firebaseio.com",
-  projectId: "app-fairpay",
-  storageBucket: "app-fairpay.firebasestorage.app",
-  messagingSenderId: "29576302334",
-  appId: "1:29576302334:web:0e559f804bf62c59981faf"
+const FIREBASE_CONFIG={
+ apiKey:"AIzaSyABvY_6cHonbLvdBj5cYMSheJDLMd_-bNw",
+ authDomain:"app-fairpay.firebaseapp.com",
+ databaseURL:"https://app-fairpay-default-rtdb.firebaseio.com",
+ projectId:"app-fairpay",
+ appId:"1:29576302334:web:0e559f804bf62c59981faf"
 };
 
-// init firebase
 firebase.initializeApp(FIREBASE_CONFIG);
-const db = firebase.database();
-const ordersRef = db.ref('orders');
+const db=firebase.database();
+const ordersRef=db.ref("orders");
 
-// local in-memory store of waiting cash orders (key -> value)
-const waitingCash = new Map();
+let mode="cash";
+const orders=new Map();
 
-// UI refs
-const requestsList = document.getElementById('requestsList');
-const noRequests = document.getElementById('noRequests');
-const modalBackdrop = document.getElementById('modalBackdrop');
-const modalCode = document.getElementById('modalCode');
-const modalAmount = document.getElementById('modalAmount');
-const modalTerminal = document.getElementById('modalTerminal');
-const modalTime = document.getElementById('modalTime');
-const modalItems = document.getElementById('modalItems');
-const modalTitle = document.getElementById('modalTitle');
+const list=document.getElementById("ordersList");
+const empty=document.getElementById("emptyText");
+const title=document.getElementById("listTitle");
+const fireDome=document.getElementById("fireDome");
 
-const btnConfirm = document.getElementById('btnConfirm');
-const btnReject = document.getElementById('btnReject');
-const btnExit = document.getElementById('btnExit');
+document.getElementById("modeCash").onclick=()=>setMode("cash");
+document.getElementById("modeKitchen").onclick=()=>setMode("kitchen");
 
-const searchInput = document.getElementById('searchInput');
-const searchBtn = document.getElementById('searchBtn');
-const searchResult = document.getElementById('searchResult');
-
-const actionsLog = document.getElementById('actionsLog');
-
-let currentModalOrderKey = null;
-
-// helper: pretty time
-function fmtTime(ts){
-  try {
-    const d = new Date(ts);
-    return d.toLocaleString();
-  } catch(e){ return String(ts); }
+function setMode(m){
+ mode=m;
+ document.getElementById("modeCash").classList.toggle("active",m==="cash");
+ document.getElementById("modeKitchen").classList.toggle("active",m==="kitchen");
+ title.textContent=m==="cash"?"Ожидают наличной оплаты":"Кухня";
+ render();
 }
 
-// render list of waitingCash
-function renderList(){
-  requestsList.innerHTML = '';
-  if(waitingCash.size === 0){
-    noRequests.style.display = 'block';
-    return;
-  }
-  noRequests.style.display = 'none';
-
-  // sort by time ascending
-  const arr = Array.from(waitingCash.entries()).sort((a,b)=>{
-    const ta = a[1].time || 0;
-    const tb = b[1].time || 0;
-    return ta - tb;
-  });
-
-  for(const [key, order] of arr){
-    const el = document.createElement('div');
-    el.className = 'req';
-    el.dataset.key = key;
-
-    const left = document.createElement('div'); left.className = 'left';
-    const code = document.createElement('div'); code.className = 'code'; code.textContent = order.orderNumber || '—';
-    const meta = document.createElement('div'); 
-    meta.innerHTML = `<div class="muted">${order.items && order.items.length ? order.items.map(i=>i.name).join(', ') : 'Заказ'}</div>
-                      <div class="muted">${fmtTime(order.time)}</div>`;
-    left.appendChild(code);
-    left.appendChild(meta);
-
-    const right = document.createElement('div'); right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end';
-    const amount = document.createElement('div'); amount.className = 'amount'; amount.textContent = (order.amount !== undefined) ? Number(order.amount).toFixed(2) : '—';
-    const actions = document.createElement('div'); actions.style.marginTop='6px';
-    const openBtn = document.createElement('button'); openBtn.className='gray'; openBtn.style.marginRight='6px'; openBtn.textContent='Открыть';
-    openBtn.onclick = ()=> openModalForKey(key);
-    actions.appendChild(openBtn);
-
-    right.appendChild(amount);
-    right.appendChild(actions);
-
-    el.appendChild(left);
-    el.appendChild(right);
-    requestsList.appendChild(el);
-  }
+function log(t){
+ const d=document.createElement("div");
+ d.textContent=new Date().toLocaleTimeString()+" — "+t;
+ document.getElementById("log").prepend(d);
 }
 
-// open modal for a given key
-function openModalForKey(key){
-  const order = waitingCash.get(key);
-  if(!order) return;
-  currentModalOrderKey = key;
-  modalTitle.textContent = 'Заявка на оплату (наличные)';
-  modalCode.textContent = order.orderNumber || '—';
-  modalAmount.textContent = (order.amount !== undefined) ? Number(order.amount).toFixed(2) : '—';
-  modalTerminal.textContent = order.terminalId || '—';
-  modalTime.textContent = fmtTime(order.time || Date.now());
-  modalItems.innerHTML = '';
+function render(){
+ list.innerHTML="";
+ let shown=0;
+ orders.forEach((o,k)=>{
+   if(mode==="cash" && !(o.paymentType==="cash" && o.status==="waiting_for_cash")) return;
+   if(mode==="kitchen" && o.status!=="cooking" && o.status!=="packing") return;
 
-  const items = order.items || [];
-  if(items.length === 0){
-    modalItems.innerHTML = '<div class="muted">Позиции не указаны</div>';
-  } else {
-    for(const it of items){
-      const r = document.createElement('div'); r.className='row';
-      r.innerHTML = `<div>${it.name || 'Товар'}</div><div class="muted">${(it.price !== undefined) ? Number(it.price).toFixed(2) : ''} × ${it.count || 1}</div>`;
-      modalItems.appendChild(r);
-    }
-  }
+   shown++;
+   const el=document.createElement("div");
+   el.className="req";
 
-  // show modal
-  modalBackdrop.style.display = 'flex';
+   let badge="";
+   if(o.status==="cooking") badge='<span class="badge cooking">Готовится</span>';
+   if(o.status==="packing") badge='<span class="badge packing">Пакуется</span>';
+
+   el.innerHTML=`
+     <div>
+       <div class="code">${o.orderNumber}</div>
+       ${badge}
+     </div>
+     <div class="amount">${o.amount||""}</div>
+   `;
+
+   if(mode==="kitchen"){
+     el.onclick=()=>cycleStatus(k,o);
+   }
+
+   list.appendChild(el);
+ });
+ empty.style.display=shown? "none":"block";
 }
 
-// close modal
-function closeModal(){
-  modalBackdrop.style.display = 'none';
-  currentModalOrderKey = null;
+function cycleStatus(key,order){
+ let next;
+ if(order.status==="cooking") next="packing";
+ else if(order.status==="packing") next="ready";
+ else return;
+
+ ordersRef.child(key).update({status:next},()=>{
+   log(`Заказ ${order.orderNumber} → ${next}`);
+   if(next==="ready"){
+     fireDome.style.display="flex";
+     setTimeout(()=>fireDome.style.display="none",3000);
+   }
+ });
 }
 
-// confirm: set status = "cooking"
-btnConfirm.addEventListener('click', ()=>{
-  const key = currentModalOrderKey;
-  if(!key) return;
-  const order = waitingCash.get(key);
-  if(!order) return;
-  // optimistic UI lock
-  btnConfirm.disabled = true;
-  btnReject.disabled = true;
-
-  const updates = {
-    status: 'cooking',
-    cookingBy: 'cashier', // you can replace with real cashier id
-    confirmedBy: 'cashier',
-    confirmedAt: Date.now()
-  };
-  ordersRef.child(key).update(updates, (err)=>{
-    btnConfirm.disabled = false;
-    btnReject.disabled = false;
-    if(err){
-      logAction(`Ошибка подтверждения ${order.orderNumber}: ${err.message}`);
-      alert('Ошибка обновления в базе: '+err.message);
-      return;
-    }
-    logAction(`Подтверждён наличный платёж — ${order.orderNumber}`);
-    // remove from waiting list (since now cooking)
-    waitingCash.delete(key);
-    renderList();
-    closeModal();
-  });
+ordersRef.on("child_added",s=>{
+ orders.set(s.key,s.val());
+ render();
 });
 
-// reject: mark rejectedByCashier=true and leave status waiting_for_cash
-btnReject.addEventListener('click', ()=>{
-  const key = currentModalOrderKey;
-  if(!key) return;
-  const order = waitingCash.get(key);
-  if(!order) return;
-
-  btnReject.disabled = true;
-  btnConfirm.disabled = true;
-  const updates = {
-    rejectedByCashier: true,
-    rejectedAt: Date.now(),
-    rejectedReason: 'insufficient_funds' // optional - can be changed by cashier UI
-  };
-  ordersRef.child(key).update(updates, (err)=>{
-    btnReject.disabled = false;
-    btnConfirm.disabled = false;
-    if(err){
-      logAction(`Ошибка отклонения ${order.orderNumber}: ${err.message}`);
-      alert('Ошибка обновления в базе: '+err.message);
-      return;
-    }
-    logAction(`Отклонён наличный платёж — ${order.orderNumber}`);
-    // keep order in waiting list (per requirement)
-    // we update the stored order data in place:
-    const newOrder = Object.assign({}, order, updates);
-    waitingCash.set(key, newOrder);
-    renderList();
-    closeModal();
-  });
+ordersRef.on("child_changed",s=>{
+ orders.set(s.key,s.val());
+ render();
 });
-
-// exit modal
-btnExit.addEventListener('click', ()=> {
-  closeModal();
-});
-
-// search functionality
-searchBtn.addEventListener('click', async ()=>{
-  const code = (searchInput.value || '').trim();
-  searchResult.innerHTML = '';
-  if(!code){
-    searchResult.textContent = 'Введите код.';
-    return;
-  }
-
-  // first try to find among local waitingCash
-  for(const [k,v] of waitingCash.entries()){
-    if(String(v.orderNumber) === code){
-      openModalForKey(k);
-      return;
-    }
-  }
-
-  // otherwise query Firebase once for orderNumber (scan)
-  searchResult.textContent = 'Идёт поиск...';
-  try {
-    const snapshot = await ordersRef.once('value');
-    let foundKey = null;
-    snapshot.forEach(child=>{
-      const val = child.val();
-      if(String(val.orderNumber) === code && val.paymentType === 'cash'){
-        foundKey = child.key;
-        return true; // stop
-      }
-    });
-
-    if(!foundKey){
-      searchResult.textContent = 'Код не найден (или не заявка на наличную оплату).';
-      return;
-    }
-
-    // if found, ensure it's in waitingCash (if waiting_for_cash), else open modal anyway
-    const snap = await ordersRef.child(foundKey).once('value');
-    const order = snap.val();
-    if(!order){
-      searchResult.textContent = 'Не удалось загрузить заказ.';
-      return;
-    }
-    // show modal even if status not waiting (cash)
-    // but if status is not waiting_for_cash and not cash — inform
-    if(order.paymentType !== 'cash'){
-      searchResult.textContent = 'Найденный заказ не является наличным.';
-      return;
-    }
-
-    // If not waiting_for_cash, still show but indicate current status
-    // For consistent UX, display current record in modal (and allow confirm only if still waiting)
-    // For simplicity, if status != waiting_for_cash, we still open modal but buttons will work (confirm will set cooking)
-    // fetch the key and open modal; if status is not waiting yet, also allow confirm to set cooking
-    // For that, we put it into waitingCash temporarily keyed by foundKey
-    waitingCash.set(foundKey, order);
-    renderList();
-    openModalForKey(foundKey);
-    searchResult.textContent = '';
-  } catch(e){
-    console.error(e);
-    searchResult.textContent = 'Ошибка поиска: '+e.message;
-  }
-});
-
-// log actions
-function logAction(text){
-  const row = document.createElement('div');
-  row.textContent = `${new Date().toLocaleTimeString()} — ${text}`;
-  actionsLog.prepend(row);
-}
-
-// Firebase realtime listeners
-ordersRef.on('child_added', snap=>{
-  const key = snap.key;
-  const order = snap.val();
-  if(order.paymentType === 'cash' && order.status === 'waiting_for_cash'){
-    // add to waiting list
-    waitingCash.set(key, order);
-    renderList();
-    // auto-open modal for the new order
-    openModalForKey(key);
-    logAction(`Новая заявка наличными: ${order.orderNumber || key}`);
-  }
-});
-
-ordersRef.on('child_changed', snap=>{
-  const key = snap.key;
-  const order = snap.val();
-
-  // If status changed from waiting to cooking -> remove from waiting list
-  if(order.paymentType === 'cash'){
-    if(order.status === 'waiting_for_cash'){
-      waitingCash.set(key, order);
-    } else if(order.status === 'cooking'){
-      // remove from waiting list if existed
-      if(waitingCash.has(key)){
-        waitingCash.delete(key);
-      }
-    } else {
-      // other statuses: keep or remove as needed
-      if(waitingCash.has(key) && order.status !== 'waiting_for_cash'){
-        waitingCash.delete(key);
-      }
-    }
-    renderList();
-  } else {
-    // if not cash but present in waitingCash, remove it
-    if(waitingCash.has(key)){
-      waitingCash.delete(key);
-      renderList();
-    }
-  }
-});
-
-ordersRef.on('child_removed', snap=>{
-  const key = snap.key;
-  if(waitingCash.has(key)){
-    waitingCash.delete(key);
-    renderList();
-  }
-});
-
-// init: load existing cash waiting orders once so list persists across reloads
-(async function initLoad(){
-  try {
-    const snapshot = await ordersRef.once('value');
-    snapshot.forEach(child=>{
-      const key = child.key;
-      const order = child.val();
-      if(order.paymentType === 'cash' && order.status === 'waiting_for_cash'){
-        waitingCash.set(key, order);
-      }
-    });
-    renderList();
-  } catch(e){
-    console.error('Init load failed', e);
-  }
-})();
-
 </script>
 </body>
 </html>
