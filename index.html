@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>FairPoint — Касса (Наличные)</title>
+<title>FairPoint — Касса / Кухня</title>
 
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -11,135 +11,150 @@
 
 <style>
   :root{
-    --bg:#f7f7f8;
+    --bg:#f4f4f6;
     --card:#ffffff;
     --muted:#666;
     --accent:#ff7a45;
     --accent-dark:#d9480f;
-    --success:#52c41a;
-    --danger:#ff4d4f;
-    --shadow: 0 6px 18px rgba(0,0,0,0.08);
+    --cook:#ff5252;
+    --packing:#ffb74d;
+    --ready:#4caf50;
+    --shadow: 0 8px 28px rgba(16,24,40,0.06);
     font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
     color-scheme: light;
   }
 
   html,body{height:100%; margin:0; background:var(--bg); color:#111;}
+  .app{max-width:1200px;margin:16px auto;padding:12px;}
+  header{display:flex;align-items:center;gap:12px;padding:8px 0;}
+  #logo{
+    width:64px;height:64px;border-radius:12px;
+    background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px; cursor:pointer;
+  }
+  #brand{font-size:18px;font-weight:800}
+  .role-select{margin-left:auto; display:flex; gap:8px;}
+  .role-btn{padding:10px 14px;border-radius:8px;border:1px solid rgba(0,0,0,0.06); background:#fff; cursor:pointer;}
+  .role-btn.active{box-shadow:var(--shadow); outline:2px solid rgba(0,0,0,0.04);}
 
-  .wrap{max-width:1200px; margin:20px auto; padding:18px;}
+  main{margin-top:12px;}
 
-  header{display:flex; align-items:center; gap:16px; margin-bottom:10px;}
-  .logo{width:56px; height:56px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent-dark)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:18px;}
-  h1{font-size:20px; margin:0;}
-  .top-controls{margin-left:auto; display:flex; gap:8px; align-items:center;}
-
+  /* layout */
+  .layout{display:grid; grid-template-columns: 1fr 380px; gap:12px;}
   .panel{background:var(--card); border-radius:12px; padding:12px; box-shadow:var(--shadow);}
 
-  /* main layout */
-  .grid{display:grid; grid-template-columns: 1fr 320px; gap:12px;}
+  /* cashier layout */
+  .tabs{display:flex; gap:8px; margin-bottom:12px;}
+  .tab{padding:8px 10px;border-radius:8px;background:#fafafa; cursor:pointer; border:1px solid #eee;}
+  .tab.active{background:#fff; box-shadow:var(--shadow);}
 
-  /* left: list of cash requests */
-  .requests{display:flex; flex-direction:column; gap:12px;}
-  .requests .panel{flex:1; display:flex; flex-direction:column; gap:8px;}
-  .list{display:flex; flex-direction:column; gap:8px; max-height:65vh; overflow:auto; padding:4px;}
-  .req{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; border-radius:10px; background:#fff; border:1px solid #eee; transition: background 0.5s;}
-  .req.new-order{background:#fffae6;}
-  .req .left{display:flex; gap:12px; align-items:center;}
-  .code{font-weight:800; font-size:18px; background:linear-gradient(90deg,var(--accent),var(--accent-dark)); color:#fff; padding:6px 10px; border-radius:8px;}
-  .meta{color:var(--muted); font-size:13px;}
-  .amount{font-weight:800; font-size:16px;}
-  .badge{font-size:12px; padding:6px 8px; border-radius:8px; background:#fff; border:1px solid #eee;}
+  .list{display:flex;flex-direction:column;gap:10px; max-height:66vh; overflow:auto;padding:6px;}
+  .order-row{display:flex;justify-content:space-between;align-items:center;padding:10px;border-radius:10px;border:1px solid #eee;background:#fff;}
+  .order-left{display:flex;gap:12px;align-items:center;}
+  .badge{padding:6px 8px;border-radius:8px;font-weight:800;color:#fff}
+  .code{background:linear-gradient(90deg,var(--accent),var(--accent-dark));}
+  .meta{color:var(--muted);font-size:13px}
+  .btn{padding:8px 10px;border-radius:8px;border:none;cursor:pointer;background:var(--accent);color:#fff;font-weight:700}
+  .btn.gray{background:#f0f0f0;color:#111;border:1px solid #e6e6e6}
+  .btn.red{background:#ff4d4f}
 
-  /* right: details / search */
-  .sidebar{display:flex; flex-direction:column; gap:12px;}
-  .search-row{display:flex; gap:8px;}
-  input[type="text"]{padding:10px; border-radius:8px; border:1px solid #ddd; flex:1;}
-  button{padding:10px 12px; border-radius:8px; border:none; cursor:pointer; background:var(--accent); color:#fff; font-weight:700;}
-  button.gray{background:#f0f0f0; color:#111; border:1px solid #e6e6e6;}
-  button.red{background:var(--danger);}
+  /* kitchen */
+  .columns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .col{min-height:48vh;padding:8px}
+  .col h3{margin:6px 0 12px 0}
+  .tile{height:84px;border-radius:10px;background:#fff;border:1px solid #eee;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;cursor:pointer}
+  .tile.cooking{border-left:6px solid var(--cook)}
+  .tile.packing{border-left:6px solid var(--packing)}
+  .tile.ready{border-left:6px solid var(--ready)}
 
   /* modal */
-  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:999;}
-  .modal{width:520px; background:#fff; border-radius:12px; padding:18px; box-shadow:0 12px 36px rgba(0,0,0,0.25);}
-  .modal h3{margin:0 0 8px 0;}
-  .modal .items{margin-top:10px; border-top:1px dashed #eee; padding-top:8px; max-height:240px; overflow:auto;}
-  .modal .row{display:flex; justify-content:space-between; gap:8px; margin-bottom:6px;}
-  .modal .actions{display:flex; gap:8px; margin-top:12px; justify-content:flex-end;}
+  .modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:9999}
+  .modal{width:560px;background:#fff;border-radius:12px;padding:16px;box-shadow:0 18px 50px rgba(0,0,0,0.4)}
+  .modal h4{margin:0 0 8px 0}
+  .row{display:flex;justify-content:space-between;gap:8px;margin:8px 0}
+  .input{padding:8px;border-radius:8px;border:1px solid #eee;width:100%}
 
-  /* small helpers */
-  .muted{color:var(--muted); font-size:13px;}
-  .empty{padding:24px; text-align:center; color:var(--muted);}
+  /* staff menu */
+  #staffMenu{position:fixed;right:16px;top:16px;background:#fff;border-radius:10px;padding:12px;box-shadow:var(--shadow);display:none;z-index:999}
+  #staffMenu h4{margin:0 0 8px 0}
+  #termList div{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
+
+  /* small */
+  .muted{color:var(--muted);font-size:13px}
+  .history{max-height:60vh;overflow:auto;padding:6px}
+  .history .item{padding:8px;border-radius:8px;border:1px solid #eee;background:#fff;margin-bottom:6px}
+  .search{display:flex;gap:8px}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="app">
   <header>
-    <div class="logo">FP</div>
-    <div>
-      <h1>FairPoint — Касса (Наличные)</h1>
-      <div class="muted">Здесь кассир принимает наличные — подтверждай или отклоняй заявки.</div>
-    </div>
+    <div id="logo" title="Нажать 3 раза — персональное меню">FP</div>
+    <div id="brand">FairPoint — Касса / Кухня</div>
 
-    <div class="top-controls">
-      <div class="muted">Авто-открытие новых заявок включено</div>
+    <div class="role-select" id="roleSelect">
+      <button class="role-btn" data-role="cashier" id="btnRoleCashier">Кассир</button>
+      <button class="role-btn" data-role="kitchen" id="btnRoleKitchen">Кухня</button>
     </div>
   </header>
 
-  <div class="grid">
-    <!-- left column: list -->
-    <div class="requests panel">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="font-weight:800">Ожидающие оплаты наличными</div>
-        <div class="muted">Новые автоматически открываются</div>
+  <main>
+    <div class="layout">
+      <div id="mainPanel" class="panel">
+        <!-- content injected by JS depending on role -->
+        <div id="welcome" class="muted">Выберите роль — Кассир или Кухня. Привяжите терминал в персональном меню (3 клика по логотипу).</div>
       </div>
 
-      <div class="list" id="requestsList">
-        <!-- items will be injected here -->
-      </div>
-
-      <div id="noRequests" class="empty">Список пуст — новых заявок нет.</div>
-    </div>
-
-    <!-- right column: search / manual -->
-    <div class="sidebar">
-      <div class="panel">
-        <div style="font-weight:800; margin-bottom:8px;">Поиск по коду</div>
-        <div class="search-row">
-          <input id="searchInput" type="text" placeholder="Введите код заказа (пример: 0022)" />
-          <button id="searchBtn">Найти</button>
-        </div>
-        <div id="searchResult" style="margin-top:10px;"></div>
-      </div>
-
-      <div class="panel">
-        <div style="font-weight:800; margin-bottom:8px;">История действий кассира</div>
-        <div id="actionsLog" style="max-height:28vh; overflow:auto; font-size:13px; color:var(--muted);"></div>
+      <div class="panel" style="min-width:300px">
+        <h4>Привязанные терминалы</h4>
+        <div id="boundList" class="muted">Нет привязанных терминалов</div>
+        <div style="height:12px"></div>
+        <h4>Активная роль: <span id="currentRole">—</span></h4>
+        <div id="roleInfo" class="muted">Здесь будет информация по выбранной роли</div>
       </div>
     </div>
+  </main>
+</div>
+
+<!-- Staff menu (triple click logo) -->
+<div id="staffMenu">
+  <h4>Персональное меню (Staff)</h4>
+  <div>
+    <label>Добавить терминал (ID):</label>
+    <input id="termInput" class="input" placeholder="например 1103" />
+    <div style="height:8px"></div>
+    <button id="addTermBtn" class="btn gray">Добавить терминал</button>
+    <div style="height:12px"></div>
+    <div id="termList"></div>
+    <div style="height:12px"></div>
+    <button id="closeStaff" class="btn gray">Закрыть</button>
   </div>
 </div>
 
-<!-- Modal -->
-<div class="modal-backdrop" id="modalBackdrop">
-  <div class="modal" role="dialog" aria-modal="true">
-    <h3 id="modalTitle">Заявка наличными</h3>
-    <div id="modalCode" style="font-size:20px; font-weight:800; margin-top:6px;"></div>
-    <div style="margin-top:8px;">
-      <div class="row"><div class="muted">Сумма</div><div id="modalAmount" class="amount"></div></div>
-      <div class="row"><div class="muted">Терминал</div><div id="modalTerminal" class="muted"></div></div>
-      <div class="row"><div class="muted">Время</div><div id="modalTime" class="muted"></div></div>
+<!-- Modal for cashier order -->
+<div class="modal-back" id="modal">
+  <div class="modal">
+    <h4 id="modalTitle">Заявка на наличные</h4>
+    <div class="row"><div class="muted">Код:</div><div id="modalCode" style="font-weight:900"></div></div>
+    <div class="row"><div class="muted">Терминал:</div><div id="modalTerm" class="muted"></div></div>
+    <div class="row"><div class="muted">Сумма:</div><div id="modalAmount" class="muted"></div></div>
+    <div class="row"><div class="muted">Время:</div><div id="modalTime" class="muted"></div></div>
+
+    <div style="margin-top:8px">
+      <label>Сдача клиенту (если подтверждаешь):</label>
+      <input id="changeInput" class="input" placeholder="0.00" />
     </div>
 
-    <div class="items" id="modalItems"></div>
-
-    <div class="actions">
-      <button id="btnReject" class="gray">Отклонить</button>
-      <button id="btnExit" class="gray">Выйти</button>
-      <button id="btnConfirm" style="background:var(--accent); color:#fff;">Подтвердить</button>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button id="modalReject" class="btn red">Отклонить</button>
+      <button id="modalClose" class="btn gray">Закрыть</button>
+      <button id="modalConfirm" class="btn">Подтвердить</button>
     </div>
   </div>
 </div>
 
 <script>
+/* ========== CONFIG: Firebase ========== */
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyABvY_6cHonbLvdBj5cYMSheJDLMd_-bNw",
   authDomain: "app-fairpay.firebaseapp.com",
@@ -150,306 +165,524 @@ const FIREBASE_CONFIG = {
   appId: "1:29576302334:web:0e559f804bf62c59981faf"
 };
 
-// init firebase
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.database();
 const ordersRef = db.ref('orders');
 
-const waitingCash = new Map();
+/* ========== State ========== */
+let boundTerminals = JSON.parse(localStorage.getItem('boundTerminals') || '[]'); // array of ids
+let currentRole = localStorage.getItem('currentRole') || null; // 'cashier' | 'kitchen'
+let orders = new Map(); // key -> order object (latest snapshot)
+let autoOpenModal = true; // auto open on new cash order
+let tripleClicks = 0;
+let tripleTimer = null;
 
-const requestsList = document.getElementById('requestsList');
-const noRequests = document.getElementById('noRequests');
-const modalBackdrop = document.getElementById('modalBackdrop');
+/* ========== DOM ========== */
+const logo = document.getElementById('logo');
+const staffMenu = document.getElementById('staffMenu');
+const termInput = document.getElementById('termInput');
+const addTermBtn = document.getElementById('addTermBtn');
+const termList = document.getElementById('termList');
+const closeStaff = document.getElementById('closeStaff');
+
+const mainPanel = document.getElementById('mainPanel');
+const boundList = document.getElementById('boundList');
+const currentRoleLabel = document.getElementById('currentRole');
+const roleInfo = document.getElementById('roleInfo');
+
+const btnRoleCashier = document.getElementById('btnRoleCashier');
+const btnRoleKitchen = document.getElementById('btnRoleKitchen');
+
+/* Modal elements */
+const modalBack = document.getElementById('modal');
 const modalCode = document.getElementById('modalCode');
+const modalTerm = document.getElementById('modalTerm');
 const modalAmount = document.getElementById('modalAmount');
-const modalTerminal = document.getElementById('modalTerminal');
 const modalTime = document.getElementById('modalTime');
-const modalItems = document.getElementById('modalItems');
-const modalTitle = document.getElementById('modalTitle');
+const changeInput = document.getElementById('changeInput');
+const modalConfirm = document.getElementById('modalConfirm');
+const modalReject = document.getElementById('modalReject');
+const modalClose = document.getElementById('modalClose');
 
-const btnConfirm = document.getElementById('btnConfirm');
-const btnReject = document.getElementById('btnReject');
-const btnExit = document.getElementById('btnExit');
+/* init UI */
+renderBoundList();
+setRole(currentRole || null);
 
-const searchInput = document.getElementById('searchInput');
-const searchBtn = document.getElementById('searchBtn');
-const searchResult = document.getElementById('searchResult');
+/* ======= Staff menu (triple click logo) ======= */
+logo.addEventListener('click', ()=> {
+  tripleClicks++;
+  if(tripleTimer) clearTimeout(tripleTimer);
+  tripleTimer = setTimeout(()=> { tripleClicks = 0 }, 500);
+  if(tripleClicks >= 3) {
+    tripleClicks = 0;
+    // toggle staff menu
+    staffMenu.style.display = (staffMenu.style.display === 'flex' ? 'none' : 'flex');
+    renderTermList();
+  }
+});
 
-const actionsLog = document.getElementById('actionsLog');
+addTermBtn.addEventListener('click', ()=> {
+  const id = termInput.value.trim();
+  if(!id) return alert('Введите ID терминала');
+  if(boundTerminals.includes(id)) { termInput.value=''; renderTermList(); return; }
+  boundTerminals.push(id);
+  localStorage.setItem('boundTerminals', JSON.stringify(boundTerminals));
+  termInput.value='';
+  renderTermList();
+  renderBoundList();
+  refreshMain();
+});
 
-let currentModalOrderKey = null;
+closeStaff.addEventListener('click', ()=> {
+  staffMenu.style.display = 'none';
+});
 
-function fmtTime(ts){
-  try {
-    const d = new Date(ts);
-    return d.toLocaleString();
-  } catch(e){ return String(ts); }
-}
-
-function renderList(){
-  requestsList.innerHTML = '';
-  if(waitingCash.size === 0){
-    noRequests.style.display = 'block';
+function renderTermList(){
+  termList.innerHTML = '';
+  if(boundTerminals.length === 0) {
+    termList.innerHTML = '<div class="muted">Нет привязанных терминалов</div>';
     return;
   }
-  noRequests.style.display = 'none';
-
-  const arr = Array.from(waitingCash.entries()).sort((a,b)=>{
-    const ta = a[1].time || 0;
-    const tb = b[1].time || 0;
-    return ta - tb;
+  boundTerminals.forEach(t => {
+    const row = document.createElement('div');
+    const span = document.createElement('div'); span.textContent = t;
+    const del = document.createElement('button'); del.textContent = 'Удалить'; del.className='btn gray';
+    del.addEventListener('click', ()=> {
+      boundTerminals = boundTerminals.filter(x=>x!==t);
+      localStorage.setItem('boundTerminals', JSON.stringify(boundTerminals));
+      renderTermList();
+      renderBoundList();
+      refreshMain();
+    });
+    row.appendChild(span);
+    row.appendChild(del);
+    termList.appendChild(row);
   });
-
-  for(const [key, order] of arr){
-    const el = document.createElement('div');
-    el.className = 'req';
-    el.dataset.key = key;
-
-    const left = document.createElement('div'); left.className = 'left';
-    const code = document.createElement('div'); code.className = 'code'; code.textContent = order.orderNumber || '—';
-    const meta = document.createElement('div'); 
-    meta.innerHTML = `<div class="muted">${order.items && order.items.length ? order.items.map(i=>i.name).join(', ') : 'Заказ'}</div>
-                      <div class="muted">${fmtTime(order.time)}</div>`;
-    left.appendChild(code);
-    left.appendChild(meta);
-
-    const right = document.createElement('div'); right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end';
-    const amount = document.createElement('div'); amount.className = 'amount'; amount.textContent = (order.amount !== undefined) ? Number(order.amount).toFixed(2) : '—';
-    const actions = document.createElement('div'); actions.style.marginTop='6px';
-    const openBtn = document.createElement('button'); openBtn.className='gray'; openBtn.style.marginRight='6px'; openBtn.textContent='Открыть';
-    openBtn.onclick = ()=> openModalForKey(key);
-    actions.appendChild(openBtn);
-
-    right.appendChild(amount);
-    right.appendChild(actions);
-
-    el.appendChild(left);
-    el.appendChild(right);
-    requestsList.appendChild(el);
-  }
 }
 
-// --- Modal logic (unchanged) ---
-function openModalForKey(key){
-  const order = waitingCash.get(key);
-  if(!order) return;
-  currentModalOrderKey = key;
-  modalTitle.textContent = 'Заявка на оплату (наличные)';
-  modalCode.textContent = order.orderNumber || '—';
-  modalAmount.textContent = (order.amount !== undefined) ? Number(order.amount).toFixed(2) : '—';
-  modalTerminal.textContent = order.terminalId || '—';
-  modalTime.textContent = fmtTime(order.time || Date.now());
-  modalItems.innerHTML = '';
-
-  const items = order.items || [];
-  if(items.length === 0){
-    modalItems.innerHTML = '<div class="muted">Позиции не указаны</div>';
+function renderBoundList(){
+  if(boundTerminals.length === 0){
+    boundList.textContent = 'Нет привязанных терминалов';
   } else {
-    for(const it of items){
-      const r = document.createElement('div'); r.className='row';
-      r.innerHTML = `<div>${it.name || 'Товар'}</div><div class="muted">${(it.price !== undefined) ? Number(it.price).toFixed(2) : ''} × ${it.count || 1}</div>`;
-      modalItems.appendChild(r);
-    }
+    boundList.textContent = boundTerminals.join(', ');
+  }
+}
+
+/* ===== Role management ===== */
+btnRoleCashier.addEventListener('click', ()=> setRole('cashier'));
+btnRoleKitchen.addEventListener('click', ()=> setRole('kitchen'));
+
+function setRole(role){
+  currentRole = role;
+  localStorage.setItem('currentRole', role || '');
+  currentRoleLabel.textContent = role ? (role === 'cashier' ? 'Кассир' : 'Кухня') : '—';
+  // UI highlight
+  btnRoleCashier.classList.toggle('active', role === 'cashier');
+  btnRoleKitchen.classList.toggle('active', role === 'kitchen');
+  renderBoundList();
+  refreshMain();
+}
+
+/* ===== Main rendering based on role ===== */
+function refreshMain(){
+  mainPanel.innerHTML = '';
+  if(!currentRole){
+    mainPanel.innerHTML = '<div class="muted">Выбери роль слева. Привяжи терминал в персональном меню (3 клика по логотипу).</div>';
+    return;
+  }
+  if(boundTerminals.length === 0){
+    mainPanel.innerHTML = `<div class="muted">Нет привязанных терминалов. Открой персональное меню (3 клика по логотипу) и добавь терминал. Пока нет терминалов — заказы не показываются.</div>`;
+    return;
+  }
+  if(currentRole === 'cashier'){
+    renderCashier();
+  } else {
+    renderKitchen();
+  }
+}
+
+/* ===== Cashier UI ===== */
+let currentCashTab = 'orders'; // orders | history
+function renderCashier(){
+  currentRoleLabel.textContent = 'Кассир';
+  mainPanel.innerHTML = `
+    <div>
+      <div class="tabs">
+        <div class="tab ${currentCashTab==='orders'?'active':''}" id="tabOrders">Ожидающие наличные</div>
+        <div class="tab ${currentCashTab==='history'?'active':''}" id="tabHistory">История</div>
+        <div style="margin-left:auto" class="muted">Терминалы: ${boundTerminals.join(', ')}</div>
+      </div>
+      <div id="cashierContent"></div>
+    </div>
+  `;
+  document.getElementById('tabOrders').addEventListener('click', ()=> { currentCashTab='orders'; renderCashier(); });
+  document.getElementById('tabHistory').addEventListener('click', ()=> { currentCashTab='history'; renderCashier(); });
+  const holder = document.getElementById('cashierContent');
+
+  if(currentCashTab === 'orders'){
+    holder.innerHTML = `
+      <div class="panel" style="margin-bottom:10px">
+        <div style="display:flex;gap:8px">
+          <div class="search" style="flex:1">
+            <input id="searchOrderInput" class="input" placeholder="Поиск по коду (например 0022)" />
+            <button id="searchOrderBtn" class="btn gray">Найти</button>
+          </div>
+          <div>
+            <label style="display:block;font-size:13px;color:var(--muted)">Авто-открытие</label>
+            <input type="checkbox" id="autoOpenCheckbox" ${autoOpenModal?'checked':''} />
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div id="ordersList" class="list"></div>
+      </div>
+    `;
+    document.getElementById('autoOpenCheckbox').addEventListener('change', e=> autoOpenModal = e.target.checked);
+    document.getElementById('searchOrderBtn').addEventListener('click', ()=> {
+      const code = document.getElementById('searchOrderInput').value.trim();
+      if(!code) return alert('Введите код');
+      // try find in current orders (only cash)
+      for(const [k,o] of orders.entries()){
+        if(String(o.orderNumber) === code && o.paymentType === 'cash'){
+          // show modal for that key if belongs to bound terminals
+          if(boundTerminals.includes(o.terminalId)){
+            openOrderModal(k, o);
+            return;
+          } else {
+            alert('Заказ найден, но он не от привязанного терминала');
+            return;
+          }
+        }
+      }
+      alert('Код не найден');
+    });
+    populateCashOrders();
+  } else {
+    // history
+    holder.innerHTML = `
+      <div class="panel">
+        <h4>История кассира (локально)</h4>
+        <div id="historyList" class="history"></div>
+      </div>
+    `;
+    renderHistory();
+  }
+}
+
+/* ===== Kitchen UI ===== */
+function renderKitchen(){
+  currentRoleLabel.textContent = 'Кухня';
+  mainPanel.innerHTML = `
+    <div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+        <div class="muted">Терминалы: ${boundTerminals.join(', ')}</div>
+        <div style="margin-left:auto" class="muted">Клик по плитке — смена статуса (cooking→packing→ready)</div>
+      </div>
+      <div class="columns">
+        <div class="panel col">
+          <h3>Готовится</h3>
+          <div id="kitchenCooking" class="list"></div>
+        </div>
+        <div class="panel col">
+          <h3>Готово (2 минуты)</h3>
+          <div id="kitchenReady" class="list"></div>
+        </div>
+      </div>
+    </div>
+  `;
+  populateKitchen();
+}
+
+/* ===== Populate cashier orders (waiting cash) ===== */
+function populateCashOrders(){
+  const list = document.getElementById('ordersList');
+  list.innerHTML = '';
+  // filter orders: paymentType === 'cash' && status === 'waiting_for_cash' && terminalId in boundTerminals
+  const arr = Array.from(orders.entries()).filter(([k,o]) => {
+    return o && o.paymentType === 'cash' && o.status === 'waiting_for_cash' && boundTerminals.includes(o.terminalId);
+  }).sort((a,b)=> (a[1].time||0) - (b[1].time||0));
+
+  if(arr.length === 0){
+    list.innerHTML = '<div class="muted">Нет заявок на наличные от привязанных терминалов</div>';
+    return;
   }
 
-  modalBackdrop.style.display = 'flex';
+  arr.forEach(([k,o])=>{
+    const row = document.createElement('div'); row.className='order-row';
+    const left = document.createElement('div'); left.className='order-left';
+    const code = document.createElement('div'); code.className='badge code'; code.textContent = o.orderNumber || '—';
+    const meta = document.createElement('div'); meta.innerHTML = `<div style="font-weight:700">${o.items?.map(i=>i.name).join(', ') || 'Заказ'}</div><div class="muted">${new Date(o.time||Date.now()).toLocaleString()}</div>`;
+    left.appendChild(code); left.appendChild(meta);
+    const right = document.createElement('div');
+    const amount = document.createElement('div'); amount.className='muted'; amount.style.fontWeight='800'; amount.textContent = (o.amount !== undefined ? Number(o.amount).toFixed(2) : '—');
+    const openBtn = document.createElement('button'); openBtn.className='btn gray'; openBtn.textContent='Открыть'; openBtn.addEventListener('click', ()=> openOrderModal(k,o));
+    right.appendChild(amount); right.appendChild(openBtn);
+    row.appendChild(left); row.appendChild(right);
+    list.appendChild(row);
+  });
 }
 
-function closeModal(){
-  modalBackdrop.style.display = 'none';
-  currentModalOrderKey = null;
+/* ===== Modal behavior (cashier) ===== */
+let currentModalKey = null;
+function openOrderModal(key, order){
+  currentModalKey = key;
+  modalCode.textContent = order.orderNumber || '—';
+  modalTerm.textContent = order.terminalId || '—';
+  modalAmount.textContent = (order.amount !== undefined ? Number(order.amount).toFixed(2) : '—');
+  modalTime.textContent = new Date(order.time||Date.now()).toLocaleString();
+  changeInput.value = '';
+  modalBack.style.display = 'flex';
 }
+modalClose.addEventListener('click', ()=> { modalBack.style.display='none'; currentModalKey = null; });
+modalBack.addEventListener('click', (e)=> { if(e.target === modalBack){ modalBack.style.display='none'; currentModalKey = null; } });
 
-// --- Confirm / Reject logic (unchanged) ---
-btnConfirm.addEventListener('click', ()=>{
-  const key = currentModalOrderKey;
-  if(!key) return;
-  const order = waitingCash.get(key);
-  if(!order) return;
-  btnConfirm.disabled = true;
-  btnReject.disabled = true;
-
+modalConfirm.addEventListener('click', ()=> {
+  if(!currentModalKey) return;
+  const key = currentModalKey;
+  const changeVal = parseFloat(changeInput.value) || 0.0;
+  // update firebase: status -> cooking, add confirmedBy/At and changeGiven
   const updates = {
     status: 'cooking',
-    cookingBy: 'cashier',
     confirmedBy: 'cashier',
-    confirmedAt: Date.now()
+    confirmedAt: Date.now(),
+    changeGiven: changeVal
   };
   ordersRef.child(key).update(updates, (err)=>{
-    btnConfirm.disabled = false;
-    btnReject.disabled = false;
-    if(err){
-      logAction(`Ошибка подтверждения ${order.orderNumber}: ${err.message}`);
-      alert('Ошибка обновления в базе: '+err.message);
-      return;
-    }
-    logAction(`Подтверждён наличный платёж — ${order.orderNumber}`);
-    waitingCash.delete(key);
-    renderList();
-    closeModal();
+    if(err){ alert('Ошибка обновления: '+err.message); return; }
+    // log history locally
+    pushCashierHistory({ action: 'confirm', orderNumber: orders.get(key)?.orderNumber || key, key, changeGiven: changeVal, time: Date.now() });
+    // remove from local waiting view (populate will reflect live DB change)
+    modalBack.style.display='none';
+    currentModalKey = null;
   });
 });
 
-btnReject.addEventListener('click', ()=>{
-  const key = currentModalOrderKey;
-  if(!key) return;
-  const order = waitingCash.get(key);
-  if(!order) return;
-
-  btnReject.disabled = true;
-  btnConfirm.disabled = true;
+modalReject.addEventListener('click', ()=> {
+  if(!currentModalKey) return;
+  const key = currentModalKey;
   const updates = {
     rejectedByCashier: true,
-    rejectedAt: Date.now(),
-    rejectedReason: 'insufficient_funds'
+    rejectedAt: Date.now()
   };
   ordersRef.child(key).update(updates, (err)=>{
-    btnReject.disabled = false;
-    btnConfirm.disabled = false;
-    if(err){
-      logAction(`Ошибка отклонения ${order.orderNumber}: ${err.message}`);
-      alert('Ошибка обновления в базе: '+err.message);
-      return;
-    }
-    logAction(`Отклонён наличный платёж — ${order.orderNumber}`);
-    const newOrder = Object.assign({}, order, updates);
-    waitingCash.set(key, newOrder);
-    renderList();
-    closeModal();
+    if(err){ alert('Ошибка отклонения: '+err.message); return; }
+    pushCashierHistory({ action: 'reject', orderNumber: orders.get(key)?.orderNumber || key, key, time: Date.now() });
+    modalBack.style.display='none';
+    currentModalKey = null;
   });
 });
 
-btnExit.addEventListener('click', ()=> {
-  closeModal();
-});
-
-// --- Search logic (unchanged) ---
-searchBtn.addEventListener('click', async ()=>{
-  const code = (searchInput.value || '').trim();
-  searchResult.innerHTML = '';
-  if(!code){
-    searchResult.textContent = 'Введите код.';
-    return;
-  }
-
-  for(const [k,v] of waitingCash.entries()){
-    if(String(v.orderNumber) === code){
-      openModalForKey(k);
-      return;
-    }
-  }
-
-  searchResult.textContent = 'Идёт поиск...';
-  try {
-    const snapshot = await ordersRef.once('value');
-    let foundKey = null;
-    snapshot.forEach(child=>{
-      const val = child.val();
-      if(String(val.orderNumber) === code && val.paymentType === 'cash'){
-        foundKey = child.key;
-        return true;
-      }
-    });
-
-    if(!foundKey){
-      searchResult.textContent = 'Код не найден (или не заявка на наличную оплату).';
-      return;
-    }
-
-    const snap = await ordersRef.child(foundKey).once('value');
-    const order = snap.val();
-    if(!order){
-      searchResult.textContent = 'Не удалось загрузить заказ.';
-      return;
-    }
-    if(order.paymentType !== 'cash'){
-      searchResult.textContent = 'Найденный заказ не является наличным.';
-      return;
-    }
-
-    waitingCash.set(foundKey, order);
-    renderList();
-    openModalForKey(foundKey);
-    searchResult.textContent = '';
-  } catch(e){
-    console.error(e);
-    searchResult.textContent = 'Ошибка поиска: '+e.message;
-  }
-});
-
-function logAction(text){
-  const row = document.createElement('div');
-  row.textContent = `${new Date().toLocaleTimeString()} — ${text}`;
-  actionsLog.prepend(row);
+/* ===== Cashier history (local) ===== */
+function pushCashierHistory(entry){
+  const hist = JSON.parse(localStorage.getItem('cashierHistory') || '[]');
+  hist.unshift(entry);
+  localStorage.setItem('cashierHistory', JSON.stringify(hist.slice(0,200))); // cap
+  renderHistory();
+}
+function renderHistory(){
+  const hist = JSON.parse(localStorage.getItem('cashierHistory') || '[]');
+  const holder = document.getElementById('historyList');
+  if(!holder) return;
+  holder.innerHTML = '';
+  if(hist.length === 0) holder.innerHTML = '<div class="muted">История пуста</div>';
+  hist.forEach(h=>{
+    const el = document.createElement('div'); el.className='item';
+    el.innerHTML = `<div style="font-weight:800">${h.action === 'confirm' ? 'Подтверждение' : 'Отклонение'} — ${h.orderNumber}</div>
+      <div class="muted">${new Date(h.time).toLocaleString()}</div>
+      ${h.changeGiven !== undefined ? `<div class="muted">Сдача: ${Number(h.changeGiven).toFixed(2)}</div>` : ''}`;
+    holder.appendChild(el);
+  });
 }
 
-// --- Firebase listeners (unchanged) ---
+/* ===== Kitchen populate ===== */
+function populateKitchen(){
+  const cookingHolder = document.getElementById('kitchenCooking');
+  const readyHolder = document.getElementById('kitchenReady');
+  if(!cookingHolder || !readyHolder) return;
+  cookingHolder.innerHTML = '';
+  readyHolder.innerHTML = '';
+
+  // cooking: status === 'cooking' or 'packing' (exclude waiting_for_cash)
+  const cookingArr = Array.from(orders.entries()).filter(([k,o])=>{
+    return o && boundTerminals.includes(o.terminalId) && (o.status === 'cooking' || o.status === 'packing');
+  }).sort((a,b)=> (a[1].time||0) - (b[1].time||0));
+
+  const readyArr = Array.from(orders.entries()).filter(([k,o])=>{
+    if(!o || !boundTerminals.includes(o.terminalId)) return false;
+    if(o.status !== 'ready') return false;
+    // check timeReady - only show if within 2 minutes
+    const timeReady = o.timeReady || 0;
+    if(!timeReady) return true; // still show if no timeReady present (fresh)
+    return (Date.now() - timeReady) <= 2 * 60 * 1000;
+  }).sort((a,b)=> (a[1].timeReady||0) - (b[1].timeReady||0));
+
+  if(cookingArr.length === 0) cookingHolder.innerHTML = '<div class="muted">Пусто</div>';
+  cookingArr.forEach(([k,o])=>{
+    const tile = document.createElement('div'); tile.className = 'tile cooking'; tile.textContent = o.orderNumber || '—';
+    tile.addEventListener('click', ()=> cycleKitchenStatus(k,o,tile));
+    cookingHolder.appendChild(tile);
+  });
+
+  if(readyArr.length === 0) readyHolder.innerHTML = '<div class="muted">Пусто</div>';
+  readyArr.forEach(([k,o])=>{
+    const tile = document.createElement('div'); tile.className = 'tile ready'; tile.textContent = o.orderNumber || '—';
+    tile.addEventListener('click', ()=> cycleKitchenStatus(k,o,tile));
+    readyHolder.appendChild(tile);
+    // schedule removal after remaining time (if any)
+    const timeReady = o.timeReady || Date.now();
+    const remaining = Math.max(0, 2*60*1000 - (Date.now() - timeReady));
+    if(remaining > 0){
+      setTimeout(()=> {
+        // re-render (it will omit expired)
+        populateKitchen();
+      }, remaining + 200);
+    } else {
+      // expired -> will disappear on next refresh
+    }
+  });
+}
+
+/* Cycle kitchen status: cooking -> packing -> ready (and set timeReady) */
+function cycleKitchenStatus(key, order, tileEl){
+  if(!order) return;
+  const next = order.status === 'cooking' ? 'packing' : (order.status === 'packing' ? 'ready' : 'cooking');
+  const updates = { status: next };
+  if(next === 'ready'){
+    updates.timeReady = Date.now();
+  }
+  ordersRef.child(key).update(updates, err=>{
+    if(err) return alert('Ошибка смены статуса: '+err.message);
+    // immediate local update (will be overwritten by firebase event)
+    const local = Object.assign({}, order, updates);
+    orders.set(key, local);
+    if(next === 'ready'){
+      // speak
+      speakText(`Заказ номер ${local.orderNumber} готов`);
+    }
+    // refresh UI
+    populateKitchen();
+  });
+}
+
+/* TTS helper */
+function speakText(text){
+  try{
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'ru-RU';
+    speechSynthesis.cancel();
+    // small beep
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 880;
+    g.gain.value = 0.05;
+    o.connect(g); g.connect(ctx.destination);
+    o.start();
+    setTimeout(()=> { o.stop(); ctx.close(); speechSynthesis.speak(u); }, 160);
+  }catch(e){
+    console.warn('TTS fail', e);
+  }
+}
+
+/* ===== Firebase listeners ===== */
 ordersRef.on('child_added', snap=>{
   const key = snap.key;
-  const order = snap.val();
-  if(order.paymentType === 'cash' && order.status === 'waiting_for_cash'){
-    waitingCash.set(key, order);
-    renderList();
-    openModalForKey(key);
-    logAction(`Новая заявка наличными: ${order.orderNumber || key}`);
-    // подсветка нового заказа
-    const el = requestsList.querySelector(`.req[data-key="${key}"]`);
-    if(el){
-      el.classList.add('new-order');
-      setTimeout(()=>el.classList.remove('new-order'), 3000);
-      el.scrollIntoView({behavior:'smooth', block:'center'});
-    }
+  const val = snap.val();
+  orders.set(key, val);
+  // if current role is cashier, and this is waiting_for_cash from bound terminal -> auto open modal
+  if(currentRole === 'cashier' && val.paymentType === 'cash' && val.status === 'waiting_for_cash' && boundTerminals.includes(val.terminalId)){
+    populateCashOrders();
+    if(autoOpenModal) openOrderModal(key, val);
   }
+  // if current role kitchen -> refresh
+  if(currentRole === 'kitchen') populateKitchen();
 });
 
 ordersRef.on('child_changed', snap=>{
   const key = snap.key;
-  const order = snap.val();
-  if(order.paymentType === 'cash'){
-    if(order.status === 'waiting_for_cash'){
-      waitingCash.set(key, order);
-    } else if(order.status === 'cooking'){
-      if(waitingCash.has(key)){
-        waitingCash.delete(key);
-      }
-    } else {
-      if(waitingCash.has(key) && order.status !== 'waiting_for_cash'){
-        waitingCash.delete(key);
-      }
+  const val = snap.val();
+  const prev = orders.get(key);
+  orders.set(key, val);
+
+  // If order became ready -> speak and ensure timeReady exists
+  const becameReady = prev && (prev.status !== 'ready') && (val.status === 'ready');
+  if(becameReady){
+    // set timeReady if not set
+    if(!val.timeReady){
+      ordersRef.child(key).update({ timeReady: Date.now() });
     }
-    renderList();
-  } else {
-    if(waitingCash.has(key)){
-      waitingCash.delete(key);
-      renderList();
+    // speak
+    if(boundTerminals.includes(val.terminalId)){
+      speakText(`Заказ номер ${val.orderNumber} готов`);
     }
   }
+
+  // If cashier view -> refresh orders list
+  if(currentRole === 'cashier') populateCashOrders();
+  if(currentRole === 'kitchen') populateKitchen();
 });
 
 ordersRef.on('child_removed', snap=>{
   const key = snap.key;
-  if(waitingCash.has(key)){
-    waitingCash.delete(key);
-    renderList();
-  }
+  if(orders.has(key)) orders.delete(key);
+  if(currentRole === 'cashier') populateCashOrders();
+  if(currentRole === 'kitchen') populateKitchen();
 });
 
-// init load
+/* ===== initial load: fetch once so reload persists view ===== */
 (async function initLoad(){
   try {
     const snapshot = await ordersRef.once('value');
     snapshot.forEach(child=>{
-      const key = child.key;
-      const order = child.val();
-      if(order.paymentType === 'cash' && order.status === 'waiting_for_cash'){
-        waitingCash.set(key, order);
-      }
+      orders.set(child.key, child.val());
     });
-    renderList();
+    // render initial UI according to role
+    refreshMain();
   } catch(e){
     console.error('Init load failed', e);
   }
 })();
+
+/* ===== Helpers: render/update based on live map ===== */
+function refreshMainAndLists(){
+  if(currentRole === 'cashier') populateCashOrders();
+  if(currentRole === 'kitchen') populateKitchen();
+}
+
+/* utility: whenever orders map updates externally, call refreshMain */
+function refreshMain(){
+  // update role info
+  currentRoleLabel.textContent = currentRole ? (currentRole === 'cashier' ? 'Кассир' : 'Кухня') : '—';
+  roleInfo.textContent = currentRole === 'cashier' ? 'Обрабатывай наличные заявки' : 'Управление готовкой';
+  renderBoundList();
+  // render main area
+  refreshMain(); // careful: this calls itself ; fix below
+}
+
+/* small fix: avoid recursion - ensure correct refreshMain usage */
+function refreshMain(){
+  // render appropriate content
+  if(!currentRole){
+    mainPanel.innerHTML = '<div class="muted">Выберите роль.</div>';
+    return;
+  }
+  if(boundTerminals.length === 0){
+    mainPanel.innerHTML = '<div class="muted">Нет привязанных терминалов — добавьте в персональном меню (3 клика по логотипу).</div>';
+    return;
+  }
+  if(currentRole === 'cashier') renderCashier();
+  else renderKitchen();
+}
+
+/* Also expose some debug helpers on window */
+window._fairpoint = {
+  getBound: ()=> boundTerminals.slice(),
+  setBound: arr => { boundTerminals = arr; localStorage.setItem('boundTerminals', JSON.stringify(boundTerminals)); renderTermList(); renderBoundList(); refreshMain(); },
+  getOrdersMap: ()=> Array.from(orders.entries()),
+  playTts: speakText
+};
+
 </script>
 </body>
 </html>
