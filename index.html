@@ -1,324 +1,155 @@
 <!doctype html>
 <html lang="ru">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FireKiosk — Показ заказов</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FairPoint — Касса (Наличные)</title>
 
+<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
 <style>
-:root{
-  --bg:#0e0e0e;
-  --text:#ffffff;
-  --card:#151515;
-  --border:#222;
-  --cook:#c62828;
-  --ready:#2e7d32;
-}
+  :root{
+    --bg:#f7f7f8;
+    --card:#ffffff;
+    --muted:#666;
+    --accent:#ff7a45;
+    --accent-dark:#d9480f;
+    --success:#52c41a;
+    --danger:#ff4d4f;
+    --shadow: 0 6px 18px rgba(0,0,0,0.08);
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    color-scheme: light;
+  }
 
-body.light{
-  --bg:#f4f4f4;
-  --text:#111;
-  --card:#ffffff;
-  --border:#ddd;
-  --cook:#ff5252;
-  --ready:#4caf50;
-}
+  html,body{height:100%; margin:0; background:var(--bg); color:#111;}
 
-html,body{
-  margin:0;
-  height:100%;
-  background:var(--bg);
-  color:var(--text);
-  font-family:Inter,system-ui;
-}
+  .wrap{max-width:1200px; margin:20px auto; padding:18px;}
 
-.app{
-  height:100%;
-  display:flex;
-  flex-direction:column;
-}
+  header{display:flex; align-items:center; gap:16px; margin-bottom:10px;}
+  .logo{width:56px; height:56px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent-dark)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:18px;}
+  h1{font-size:20px; margin:0;}
+  .top-controls{margin-left:auto; display:flex; gap:8px; align-items:center;}
 
-header{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  padding:16px 24px;
-  border-bottom:1px solid var(--border);
-}
+  .panel{background:var(--card); border-radius:12px; padding:12px; box-shadow:var(--shadow);}
 
-#logo{
-  width:48px;
-  height:48px;
-  cursor:pointer;
-}
+  /* main layout */
+  .grid{display:grid; grid-template-columns: 1fr 320px; gap:12px;}
 
-.board{
-  flex:1;
-  display:grid;
-  grid-template-columns:1fr 1fr;
-}
+  /* left: list of cash requests */
+  .requests{display:flex; flex-direction:column; gap:12px;}
+  .requests .panel{flex:1; display:flex; flex-direction:column; gap:8px;}
+  .list{display:flex; flex-direction:column; gap:8px; max-height:65vh; overflow:auto; padding:4px;}
+  .req{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; border-radius:10px; background:#fff; border:1px solid #eee;}
+  .req .left{display:flex; gap:12px; align-items:center;}
+  .code{font-weight:800; font-size:18px; background:linear-gradient(90deg,var(--accent),var(--accent-dark)); color:#fff; padding:6px 10px; border-radius:8px;}
+  .meta{color:var(--muted); font-size:13px;}
+  .amount{font-weight:800; font-size:16px;}
+  .badge{font-size:12px; padding:6px 8px; border-radius:8px; background:#fff; border:1px solid #eee;}
 
-.column{
-  display:flex;
-  flex-direction:column;
-}
+  /* right: details / search */
+  .sidebar{display:flex; flex-direction:column; gap:12px;}
+  .search-row{display:flex; gap:8px;}
+  input[type="text"]{padding:10px; border-radius:8px; border:1px solid #ddd; flex:1;}
+  button{padding:10px 12px; border-radius:8px; border:none; cursor:pointer; background:var(--accent); color:#fff; font-weight:700;}
+  button.gray{background:#f0f0f0; color:#111; border:1px solid #e6e6e6;}
+  button.red{background:var(--danger);}
 
-.column-header{
-  text-align:center;
-  padding:14px;
-  font-weight:800;
-  font-size:18px;
-  color:#fff;
-}
+  /* modal */
+  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:999;}
+  .modal{width:520px; background:#fff; border-radius:12px; padding:18px; box-shadow:0 12px 36px rgba(0,0,0,0.25);}
+  .modal h3{margin:0 0 8px 0;}
+  .modal .items{margin-top:10px; border-top:1px dashed #eee; padding-top:8px; max-height:240px; overflow:auto;}
+  .modal .row{display:flex; justify-content:space-between; gap:8px; margin-bottom:6px;}
+  .modal .actions{display:flex; gap:8px; margin-top:12px; justify-content:flex-end;}
 
-.cooking .column-header{ background:var(--cook); }
-.ready .column-header{ background:var(--ready); }
-
-.list{
-  flex:1;
-  padding:20px;
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
-  gap:16px;
-}
-
-.order{
-  background:var(--card);
-  border-radius:18px;
-  height:120px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:36px;
-  font-weight:900;
-  letter-spacing:3px;
-  border:1px solid var(--border);
-}
-
-/* STAFF MENU */
-#staffMenu{
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.75);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:999;
-}
-
-#staffBox{
-  background:var(--card);
-  color:var(--text);
-  padding:20px;
-  width:340px;
-  border-radius:16px;
-  border:1px solid var(--border);
-}
-
-#staffBox h3{ margin-top:0 }
-
-#staffBox input,
-#staffBox button,
-#staffBox label{
-  width:100%;
-  padding:10px;
-  margin-bottom:10px;
-  border-radius:8px;
-  border:1px solid var(--border);
-  background:var(--bg);
-  color:var(--text);
-}
-
-#staffBox button{
-  cursor:pointer;
-  font-weight:700;
-}
-
-#terminalList div{
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:6px;
-}
+  /* small helpers */
+  .muted{color:var(--muted); font-size:13px;}
+  .empty{padding:24px; text-align:center; color:var(--muted);}
 </style>
 </head>
-
 <body>
-<div class="app">
+<div class="wrap">
+  <header>
+    <div class="logo">FP</div>
+    <div>
+      <h1>FairPoint — Касса (Наличные)</h1>
+      <div class="muted">Здесь кассир принимает наличные — подтверждай или отклоняй заявки.</div>
+    </div>
 
-<header>
-  <div id="logo">
-    <!-- SVG FireKiosk -->
-  </div>
-  <div style="font-size:20px;font-weight:800">
-    FireKiosk — показ заказов
-  </div>
-</header>
+    <div class="top-controls">
+      <div class="muted">Авто-открытие новых заявок включено</div>
+    </div>
+  </header>
 
-<div class="board">
-  <div class="column cooking">
-    <div class="column-header">Готовится</div>
-    <div class="list" id="listCooking"></div>
-  </div>
+  <div class="grid">
+    <!-- left column: list -->
+    <div class="requests panel">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-weight:800">Ожидающие оплаты наличными</div>
+        <div class="muted">Новые автоматически открываются</div>
+      </div>
 
-  <div class="column ready">
-    <div class="column-header">Готово</div>
-    <div class="list" id="listReady"></div>
+      <div class="list" id="requestsList">
+        <!-- items will be injected here -->
+      </div>
+
+      <div id="noRequests" class="empty">Список пуст — новых заявок нет.</div>
+    </div>
+
+    <!-- right column: search / manual -->
+    <div class="sidebar">
+      <div class="panel">
+        <div style="font-weight:800; margin-bottom:8px;">Поиск по коду</div>
+        <div class="search-row">
+          <input id="searchInput" type="text" placeholder="Введите код заказа (пример: 0022)" />
+          <button id="searchBtn">Найти</button>
+        </div>
+        <div id="searchResult" style="margin-top:10px;"></div>
+      </div>
+
+      <div class="panel">
+        <div style="font-weight:800; margin-bottom:8px;">История действий кассира</div>
+        <div id="actionsLog" style="max-height:28vh; overflow:auto; font-size:13px; color:var(--muted);"></div>
+      </div>
+    </div>
   </div>
 </div>
 
-</div>
+<!-- Modal -->
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true">
+    <h3 id="modalTitle">Заявка наличными</h3>
+    <div id="modalCode" style="font-size:20px; font-weight:800; margin-top:6px;"></div>
+    <div style="margin-top:8px;">
+      <div class="row"><div class="muted">Сумма</div><div id="modalAmount" class="amount"></div></div>
+      <div class="row"><div class="muted">Терминал</div><div id="modalTerminal" class="muted"></div></div>
+      <div class="row"><div class="muted">Время</div><div id="modalTime" class="muted"></div></div>
+    </div>
 
-<!-- STAFF MENU -->
-<div id="staffMenu">
-  <div id="staffBox">
-    <h3>Персональное меню</h3>
+    <div class="items" id="modalItems"></div>
 
-    <label>
-      <input type="checkbox" id="themeToggle">
-      Светлая тема
-    </label>
-
-    <hr>
-
-    <input id="terminalInput" placeholder="ID терминала">
-    <button id="addTerminal">Добавить терминал</button>
-    <button id="resetTerminals">Reset терминалов</button>
-
-    <div id="terminalList"></div>
-
-    <button id="closeStaff">Закрыть</button>
+    <div class="actions">
+      <button id="btnReject" class="gray">Отклонить</button>
+      <button id="btnExit" class="gray">Выйти</button>
+      <button id="btnConfirm" style="background:var(--accent); color:#fff;">Подтвердить</button>
+    </div>
   </div>
 </div>
 
 <script>
-/* STATE */
-const body = document.body;
-const listCooking = document.getElementById('listCooking');
-const listReady   = document.getElementById('listReady');
+/*
+  FairPoint cashier app
+  - listens to Firebase /orders
+  - shows paymentType === "cash" && status === "waiting_for_cash"
+  - auto-opens modal on new matching order
+  - search by orderNumber
+  - confirm -> set status = "cooking", add confirmedBy/confirmedAt
+  - reject -> set rejectedByCashier = true, rejectedAt (keeps status waiting_for_cash)
+*/
 
-let orders = new Map();
-let terminals = JSON.parse(localStorage.getItem('terminals') || '[]');
-
-/* THEME */
-const themeToggle = document.getElementById('themeToggle');
-const savedTheme = localStorage.getItem('theme');
-
-if(savedTheme === 'light'){
-  body.classList.add('light');
-  themeToggle.checked = true;
-}
-
-themeToggle.onchange = ()=>{
-  if(themeToggle.checked){
-    body.classList.add('light');
-    localStorage.setItem('theme','light');
-  }else{
-    body.classList.remove('light');
-    localStorage.setItem('theme','dark');
-  }
-};
-
-/* STAFF MENU */
-const logo = document.getElementById('logo');
-const staffMenu = document.getElementById('staffMenu');
-const terminalInput = document.getElementById('terminalInput');
-const addTerminal = document.getElementById('addTerminal');
-const resetBtn = document.getElementById('resetTerminals');
-const terminalList = document.getElementById('terminalList');
-const closeStaff = document.getElementById('closeStaff');
-
-let clicks = 0;
-logo.onclick = ()=>{
-  clicks++;
-  setTimeout(()=>clicks=0,400);
-  if(clicks === 3){
-    staffMenu.style.display = 'flex';
-    renderTerminals();
-    clicks = 0;
-  }
-};
-
-closeStaff.onclick = ()=>{
-  staffMenu.style.display = 'none';
-};
-
-addTerminal.onclick = ()=>{
-  const id = terminalInput.value.trim();
-  if(!id || terminals.includes(id)) return;
-  terminals.push(id);
-  localStorage.setItem('terminals',JSON.stringify(terminals));
-  terminalInput.value='';
-  renderTerminals();
-  refresh();
-};
-
-resetBtn.onclick = ()=>{
-  terminals = [];
-  localStorage.removeItem('terminals');
-  renderTerminals();
-  refresh();
-};
-
-function renderTerminals(){
-  terminalList.innerHTML='';
-  terminals.forEach(t=>{
-    const row=document.createElement('div');
-    row.textContent=t;
-    const del=document.createElement('button');
-    del.textContent='×';
-    del.onclick=()=>{
-      terminals=terminals.filter(x=>x!==t);
-      localStorage.setItem('terminals',JSON.stringify(terminals));
-      renderTerminals();
-      refresh();
-    };
-    row.appendChild(del);
-    terminalList.appendChild(row);
-  });
-}
-
-/* ORDERS */
-function renderOrder(num){
-  const d=document.createElement('div');
-  d.className='order';
-  d.textContent=num;
-  return d;
-}
-
-function speakOrder(num){
-  try{
-    const msg = new SpeechSynthesisUtterance(`Заказ номер ${num} готов`);
-    msg.lang = 'ru-RU';
-    speechSynthesis.cancel();
-    speechSynthesis.speak(msg);
-  }catch(e){}
-}
-
-function refresh(){
-  listCooking.innerHTML='';
-  listReady.innerHTML='';
-  if(terminals.length === 0) return;
-
-  for(const [,o] of orders){
-    if(!terminals.includes(o.terminalId)) continue;
-    if(o.status === 'waiting_for_cash') continue;
-
-    if(o.status === 'cooking'){
-      listCooking.appendChild(renderOrder(o.orderNumber));
-    }
-    if(o.status === 'completed' || o.status === 'ready'){
-      listReady.appendChild(renderOrder(o.orderNumber));
-      speakOrder(o.orderNumber);
-      setTimeout(()=>refresh(),120000);
-    }
-  }
-}
-
-/* FIREBASE */
-firebase.initializeApp({
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyABvY_6cHonbLvdBj5cYMSheJDLMd_-bNw",
   authDomain: "app-fairpay.firebaseapp.com",
   databaseURL: "https://app-fairpay-default-rtdb.firebaseio.com",
@@ -326,22 +157,333 @@ firebase.initializeApp({
   storageBucket: "app-fairpay.firebasestorage.app",
   messagingSenderId: "29576302334",
   appId: "1:29576302334:web:0e559f804bf62c59981faf"
+};
+
+// init firebase
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+const ordersRef = db.ref('orders');
+
+// local in-memory store of waiting cash orders (key -> value)
+const waitingCash = new Map();
+
+// UI refs
+const requestsList = document.getElementById('requestsList');
+const noRequests = document.getElementById('noRequests');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const modalCode = document.getElementById('modalCode');
+const modalAmount = document.getElementById('modalAmount');
+const modalTerminal = document.getElementById('modalTerminal');
+const modalTime = document.getElementById('modalTime');
+const modalItems = document.getElementById('modalItems');
+const modalTitle = document.getElementById('modalTitle');
+
+const btnConfirm = document.getElementById('btnConfirm');
+const btnReject = document.getElementById('btnReject');
+const btnExit = document.getElementById('btnExit');
+
+const searchInput = document.getElementById('searchInput');
+const searchBtn = document.getElementById('searchBtn');
+const searchResult = document.getElementById('searchResult');
+
+const actionsLog = document.getElementById('actionsLog');
+
+let currentModalOrderKey = null;
+
+// helper: pretty time
+function fmtTime(ts){
+  try {
+    const d = new Date(ts);
+    return d.toLocaleString();
+  } catch(e){ return String(ts); }
+}
+
+// render list of waitingCash
+function renderList(){
+  requestsList.innerHTML = '';
+  if(waitingCash.size === 0){
+    noRequests.style.display = 'block';
+    return;
+  }
+  noRequests.style.display = 'none';
+
+  // sort by time ascending
+  const arr = Array.from(waitingCash.entries()).sort((a,b)=>{
+    const ta = a[1].time || 0;
+    const tb = b[1].time || 0;
+    return ta - tb;
+  });
+
+  for(const [key, order] of arr){
+    const el = document.createElement('div');
+    el.className = 'req';
+    el.dataset.key = key;
+
+    const left = document.createElement('div'); left.className = 'left';
+    const code = document.createElement('div'); code.className = 'code'; code.textContent = order.orderNumber || '—';
+    const meta = document.createElement('div'); 
+    meta.innerHTML = `<div class="muted">${order.items && order.items.length ? order.items.map(i=>i.name).join(', ') : 'Заказ'}</div>
+                      <div class="muted">${fmtTime(order.time)}</div>`;
+    left.appendChild(code);
+    left.appendChild(meta);
+
+    const right = document.createElement('div'); right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end';
+    const amount = document.createElement('div'); amount.className = 'amount'; amount.textContent = (order.amount !== undefined) ? Number(order.amount).toFixed(2) : '—';
+    const actions = document.createElement('div'); actions.style.marginTop='6px';
+    const openBtn = document.createElement('button'); openBtn.className='gray'; openBtn.style.marginRight='6px'; openBtn.textContent='Открыть';
+    openBtn.onclick = ()=> openModalForKey(key);
+    actions.appendChild(openBtn);
+
+    right.appendChild(amount);
+    right.appendChild(actions);
+
+    el.appendChild(left);
+    el.appendChild(right);
+    requestsList.appendChild(el);
+  }
+}
+
+// open modal for a given key
+function openModalForKey(key){
+  const order = waitingCash.get(key);
+  if(!order) return;
+  currentModalOrderKey = key;
+  modalTitle.textContent = 'Заявка на оплату (наличные)';
+  modalCode.textContent = order.orderNumber || '—';
+  modalAmount.textContent = (order.amount !== undefined) ? Number(order.amount).toFixed(2) : '—';
+  modalTerminal.textContent = order.terminalId || '—';
+  modalTime.textContent = fmtTime(order.time || Date.now());
+  modalItems.innerHTML = '';
+
+  const items = order.items || [];
+  if(items.length === 0){
+    modalItems.innerHTML = '<div class="muted">Позиции не указаны</div>';
+  } else {
+    for(const it of items){
+      const r = document.createElement('div'); r.className='row';
+      r.innerHTML = `<div>${it.name || 'Товар'}</div><div class="muted">${(it.price !== undefined) ? Number(it.price).toFixed(2) : ''} × ${it.count || 1}</div>`;
+      modalItems.appendChild(r);
+    }
+  }
+
+  // show modal
+  modalBackdrop.style.display = 'flex';
+}
+
+// close modal
+function closeModal(){
+  modalBackdrop.style.display = 'none';
+  currentModalOrderKey = null;
+}
+
+// confirm: set status = "cooking"
+btnConfirm.addEventListener('click', ()=>{
+  const key = currentModalOrderKey;
+  if(!key) return;
+  const order = waitingCash.get(key);
+  if(!order) return;
+  // optimistic UI lock
+  btnConfirm.disabled = true;
+  btnReject.disabled = true;
+
+  const updates = {
+    status: 'cooking',
+    cookingBy: 'cashier', // you can replace with real cashier id
+    confirmedBy: 'cashier',
+    confirmedAt: Date.now()
+  };
+  ordersRef.child(key).update(updates, (err)=>{
+    btnConfirm.disabled = false;
+    btnReject.disabled = false;
+    if(err){
+      logAction(`Ошибка подтверждения ${order.orderNumber}: ${err.message}`);
+      alert('Ошибка обновления в базе: '+err.message);
+      return;
+    }
+    logAction(`Подтверждён наличный платёж — ${order.orderNumber}`);
+    // remove from waiting list (since now cooking)
+    waitingCash.delete(key);
+    renderList();
+    closeModal();
+  });
 });
 
-const ref = firebase.database().ref('orders');
+// reject: mark rejectedByCashier=true and leave status waiting_for_cash
+btnReject.addEventListener('click', ()=>{
+  const key = currentModalOrderKey;
+  if(!key) return;
+  const order = waitingCash.get(key);
+  if(!order) return;
 
-ref.on('child_added', s=>{
-  orders.set(s.key,s.val());
-  refresh();
+  btnReject.disabled = true;
+  btnConfirm.disabled = true;
+  const updates = {
+    rejectedByCashier: true,
+    rejectedAt: Date.now(),
+    rejectedReason: 'insufficient_funds' // optional - can be changed by cashier UI
+  };
+  ordersRef.child(key).update(updates, (err)=>{
+    btnReject.disabled = false;
+    btnConfirm.disabled = false;
+    if(err){
+      logAction(`Ошибка отклонения ${order.orderNumber}: ${err.message}`);
+      alert('Ошибка обновления в базе: '+err.message);
+      return;
+    }
+    logAction(`Отклонён наличный платёж — ${order.orderNumber}`);
+    // keep order in waiting list (per requirement)
+    // we update the stored order data in place:
+    const newOrder = Object.assign({}, order, updates);
+    waitingCash.set(key, newOrder);
+    renderList();
+    closeModal();
+  });
 });
-ref.on('child_changed', s=>{
-  orders.set(s.key,s.val());
-  refresh();
+
+// exit modal
+btnExit.addEventListener('click', ()=> {
+  closeModal();
 });
-ref.on('child_removed', s=>{
-  orders.delete(s.key);
-  refresh();
+
+// search functionality
+searchBtn.addEventListener('click', async ()=>{
+  const code = (searchInput.value || '').trim();
+  searchResult.innerHTML = '';
+  if(!code){
+    searchResult.textContent = 'Введите код.';
+    return;
+  }
+
+  // first try to find among local waitingCash
+  for(const [k,v] of waitingCash.entries()){
+    if(String(v.orderNumber) === code){
+      openModalForKey(k);
+      return;
+    }
+  }
+
+  // otherwise query Firebase once for orderNumber (scan)
+  searchResult.textContent = 'Идёт поиск...';
+  try {
+    const snapshot = await ordersRef.once('value');
+    let foundKey = null;
+    snapshot.forEach(child=>{
+      const val = child.val();
+      if(String(val.orderNumber) === code && val.paymentType === 'cash'){
+        foundKey = child.key;
+        return true; // stop
+      }
+    });
+
+    if(!foundKey){
+      searchResult.textContent = 'Код не найден (или не заявка на наличную оплату).';
+      return;
+    }
+
+    // if found, ensure it's in waitingCash (if waiting_for_cash), else open modal anyway
+    const snap = await ordersRef.child(foundKey).once('value');
+    const order = snap.val();
+    if(!order){
+      searchResult.textContent = 'Не удалось загрузить заказ.';
+      return;
+    }
+    // show modal even if status not waiting (cash)
+    // but if status is not waiting_for_cash and not cash — inform
+    if(order.paymentType !== 'cash'){
+      searchResult.textContent = 'Найденный заказ не является наличным.';
+      return;
+    }
+
+    // If not waiting_for_cash, still show but indicate current status
+    // For consistent UX, display current record in modal (and allow confirm only if still waiting)
+    // For simplicity, if status != waiting_for_cash, we still open modal but buttons will work (confirm will set cooking)
+    // fetch the key and open modal; if status is not waiting yet, also allow confirm to set cooking
+    // For that, we put it into waitingCash temporarily keyed by foundKey
+    waitingCash.set(foundKey, order);
+    renderList();
+    openModalForKey(foundKey);
+    searchResult.textContent = '';
+  } catch(e){
+    console.error(e);
+    searchResult.textContent = 'Ошибка поиска: '+e.message;
+  }
 });
+
+// log actions
+function logAction(text){
+  const row = document.createElement('div');
+  row.textContent = `${new Date().toLocaleTimeString()} — ${text}`;
+  actionsLog.prepend(row);
+}
+
+// Firebase realtime listeners
+ordersRef.on('child_added', snap=>{
+  const key = snap.key;
+  const order = snap.val();
+  if(order.paymentType === 'cash' && order.status === 'waiting_for_cash'){
+    // add to waiting list
+    waitingCash.set(key, order);
+    renderList();
+    // auto-open modal for the new order
+    openModalForKey(key);
+    logAction(`Новая заявка наличными: ${order.orderNumber || key}`);
+  }
+});
+
+ordersRef.on('child_changed', snap=>{
+  const key = snap.key;
+  const order = snap.val();
+
+  // If status changed from waiting to cooking -> remove from waiting list
+  if(order.paymentType === 'cash'){
+    if(order.status === 'waiting_for_cash'){
+      waitingCash.set(key, order);
+    } else if(order.status === 'cooking'){
+      // remove from waiting list if existed
+      if(waitingCash.has(key)){
+        waitingCash.delete(key);
+      }
+    } else {
+      // other statuses: keep or remove as needed
+      if(waitingCash.has(key) && order.status !== 'waiting_for_cash'){
+        waitingCash.delete(key);
+      }
+    }
+    renderList();
+  } else {
+    // if not cash but present in waitingCash, remove it
+    if(waitingCash.has(key)){
+      waitingCash.delete(key);
+      renderList();
+    }
+  }
+});
+
+ordersRef.on('child_removed', snap=>{
+  const key = snap.key;
+  if(waitingCash.has(key)){
+    waitingCash.delete(key);
+    renderList();
+  }
+});
+
+// init: load existing cash waiting orders once so list persists across reloads
+(async function initLoad(){
+  try {
+    const snapshot = await ordersRef.once('value');
+    snapshot.forEach(child=>{
+      const key = child.key;
+      const order = child.val();
+      if(order.paymentType === 'cash' && order.status === 'waiting_for_cash'){
+        waitingCash.set(key, order);
+      }
+    });
+    renderList();
+  } catch(e){
+    console.error('Init load failed', e);
+  }
+})();
+
 </script>
 </body>
 </html>
