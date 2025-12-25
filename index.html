@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>FairPoint — Касса / Кухня</title>
+<title>FairPoint — Место управления</title>
 
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -545,7 +545,7 @@ function populateKitchen(){
 /* Cycle kitchen status: cooking -> packing -> ready (and set timeReady) */
 function cycleKitchenStatus(key, order, tileEl){
   if(!order) return;
-  const next = order.status === 'cooking' ? 'packing' : (order.status === 'packing' ? 'ready' : 'cooking');
+  const next = order.status === 'cooking' : (order.status === 'ready' : 'cooking');
   const updates = { status: next };
   if(next === 'ready'){
     updates.timeReady = Date.now();
