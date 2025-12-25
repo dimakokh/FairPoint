@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>FairPoint — Место управления</title>
+<title>FairPoint — Касса / Кухня (обновлённый)</title>
 
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -31,6 +31,7 @@
     width:64px;height:64px;border-radius:12px;
     background:linear-gradient(135deg,var(--accent),var(--accent-dark));
     display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px; cursor:pointer;
+    user-select:none;
   }
   #brand{font-size:18px;font-weight:800}
   .role-select{margin-left:auto; display:flex; gap:8px;}
@@ -58,18 +59,28 @@
   .btn.gray{background:#f0f0f0;color:#111;border:1px solid #e6e6e6}
   .btn.red{background:#ff4d4f}
 
-  /* kitchen */
-  .columns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .col{min-height:48vh;padding:8px}
-  .col h3{margin:6px 0 12px 0}
-  .tile{height:84px;border-radius:10px;background:#fff;border:1px solid #eee;display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;cursor:pointer}
-  .tile.cooking{border-left:6px solid var(--cook)}
-  .tile.packing{border-left:6px solid var(--packing)}
-  .tile.ready{border-left:6px solid var(--ready)}
+  /* kitchen minimal UI */
+  .kitchen-root{display:flex;flex-direction:column;gap:12px;height:76vh;}
+  .kitchen-top{display:flex;align-items:center;gap:12px}
+  .bind-btn{padding:8px 12px;border-radius:8px;border:1px solid #e6e6e6;background:#fff;cursor:pointer}
+  .kitchen-full-list{flex:1;overflow:auto;display:flex;flex-direction:column;gap:10px;padding:6px}
+  .cooking-card{
+    background:#fff;border-radius:12px;padding:18px;border:1px solid #eee;
+    display:flex;flex-direction:column;gap:8px;box-shadow:var(--shadow);min-height:120px;
+  }
+  .cooking-card .num{font-size:36px;font-weight:900;letter-spacing:3px}
+  .items-list{display:flex;flex-direction:column;gap:6px}
+  .item-row{display:flex;justify-content:space-between;align-items:center;padding:6px;border-radius:8px;background:transparent}
+  .total-row{display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px dashed #eee;font-weight:800}
+
+  /* ready small */
+  .ready-list{display:flex;gap:8px;flex-wrap:wrap}
+  .ready-tile{background:#fff;padding:10px 12px;border-radius:10px;border:1px solid #eee;cursor:pointer;display:flex;align-items:center;gap:8px}
+  .ready-tile .num{font-weight:900}
 
   /* modal */
   .modal-back{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:9999}
-  .modal{width:560px;background:#fff;border-radius:12px;padding:16px;box-shadow:0 18px 50px rgba(0,0,0,0.4)}
+  .modal{width:520px;background:#fff;border-radius:12px;padding:16px;box-shadow:0 18px 50px rgba(0,0,0,0.4)}
   .modal h4{margin:0 0 8px 0}
   .row{display:flex;justify-content:space-between;gap:8px;margin:8px 0}
   .input{padding:8px;border-radius:8px;border:1px solid #eee;width:100%}
@@ -79,17 +90,13 @@
   #staffMenu h4{margin:0 0 8px 0}
   #termList div{display:flex;justify-content:space-between;align-items:center;padding:6px 0}
 
-  /* small */
   .muted{color:var(--muted);font-size:13px}
-  .history{max-height:60vh;overflow:auto;padding:6px}
-  .history .item{padding:8px;border-radius:8px;border:1px solid #eee;background:#fff;margin-bottom:6px}
-  .search{display:flex;gap:8px}
 </style>
 </head>
 <body>
 <div class="app">
   <header>
-    <div id="logo" title="Нажать 3 раза — персональное меню">FP</div>
+    <div id="logo" title="Три клика — персональное меню">FP</div>
     <div id="brand">FairPoint — Касса / Кухня</div>
 
     <div class="role-select" id="roleSelect">
@@ -101,7 +108,6 @@
   <main>
     <div class="layout">
       <div id="mainPanel" class="panel">
-        <!-- content injected by JS depending on role -->
         <div id="welcome" class="muted">Выберите роль — Кассир или Кухня. Привяжите терминал в персональном меню (3 клика по логотипу).</div>
       </div>
 
@@ -177,6 +183,9 @@ let autoOpenModal = true; // auto open on new cash order
 let tripleClicks = 0;
 let tripleTimer = null;
 
+/* announced set for TTS dedupe (in-memory only) */
+const announced = new Set();
+
 /* ========== DOM ========== */
 const logo = document.getElementById('logo');
 const staffMenu = document.getElementById('staffMenu');
@@ -204,6 +213,8 @@ const modalConfirm = document.getElementById('modalConfirm');
 const modalReject = document.getElementById('modalReject');
 const modalClose = document.getElementById('modalClose');
 
+let currentModalKey = null;
+
 /* init UI */
 renderBoundList();
 setRole(currentRole || null);
@@ -215,7 +226,6 @@ logo.addEventListener('click', ()=> {
   tripleTimer = setTimeout(()=> { tripleClicks = 0 }, 500);
   if(tripleClicks >= 3) {
     tripleClicks = 0;
-    // toggle staff menu
     staffMenu.style.display = (staffMenu.style.display === 'flex' ? 'none' : 'flex');
     renderTermList();
   }
@@ -245,6 +255,10 @@ function renderTermList(){
   }
   boundTerminals.forEach(t => {
     const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.justifyContent = 'space-between';
+    row.style.alignItems = 'center';
+    row.style.marginBottom = '6px';
     const span = document.createElement('div'); span.textContent = t;
     const del = document.createElement('button'); del.textContent = 'Удалить'; del.className='btn gray';
     del.addEventListener('click', ()=> {
@@ -276,7 +290,6 @@ function setRole(role){
   currentRole = role;
   localStorage.setItem('currentRole', role || '');
   currentRoleLabel.textContent = role ? (role === 'cashier' ? 'Кассир' : 'Кухня') : '—';
-  // UI highlight
   btnRoleCashier.classList.toggle('active', role === 'cashier');
   btnRoleKitchen.classList.toggle('active', role === 'kitchen');
   renderBoundList();
@@ -287,17 +300,13 @@ function setRole(role){
 function refreshMain(){
   mainPanel.innerHTML = '';
   if(!currentRole){
-    mainPanel.innerHTML = '<div class="muted">Выбери роль слева. Привяжи терминал в персональном меню (3 клика по логотипу).</div>';
-    return;
-  }
-  if(boundTerminals.length === 0){
-    mainPanel.innerHTML = `<div class="muted">Нет привязанных терминалов. Открой персональное меню (3 клика по логотипу) и добавь терминал. Пока нет терминалов — заказы не показываются.</div>`;
+    mainPanel.innerHTML = '<div class="muted">Выберите роль — Кассир или Кухня. Привяжите терминал в персональном меню (3 клика по логотипу).</div>';
     return;
   }
   if(currentRole === 'cashier'){
     renderCashier();
   } else {
-    renderKitchen();
+    renderKitchenMinimal();
   }
 }
 
@@ -341,10 +350,8 @@ function renderCashier(){
     document.getElementById('searchOrderBtn').addEventListener('click', ()=> {
       const code = document.getElementById('searchOrderInput').value.trim();
       if(!code) return alert('Введите код');
-      // try find in current orders (only cash)
       for(const [k,o] of orders.entries()){
         if(String(o.orderNumber) === code && o.paymentType === 'cash'){
-          // show modal for that key if belongs to bound terminals
           if(boundTerminals.includes(o.terminalId)){
             openOrderModal(k, o);
             return;
@@ -358,7 +365,6 @@ function renderCashier(){
     });
     populateCashOrders();
   } else {
-    // history
     holder.innerHTML = `
       <div class="panel">
         <h4>История кассира (локально)</h4>
@@ -369,35 +375,11 @@ function renderCashier(){
   }
 }
 
-/* ===== Kitchen UI ===== */
-function renderKitchen(){
-  currentRoleLabel.textContent = 'Кухня';
-  mainPanel.innerHTML = `
-    <div>
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
-        <div class="muted">Терминалы: ${boundTerminals.join(', ')}</div>
-        <div style="margin-left:auto" class="muted">Клик по плитке — смена статуса (cooking→packing→ready)</div>
-      </div>
-      <div class="columns">
-        <div class="panel col">
-          <h3>Готовится</h3>
-          <div id="kitchenCooking" class="list"></div>
-        </div>
-        <div class="panel col">
-          <h3>Готово (2 минуты)</h3>
-          <div id="kitchenReady" class="list"></div>
-        </div>
-      </div>
-    </div>
-  `;
-  populateKitchen();
-}
-
-/* ===== Populate cashier orders (waiting cash) ===== */
+/* ===== Cashier helpers etc. (same as earlier) ===== */
 function populateCashOrders(){
   const list = document.getElementById('ordersList');
+  if(!list) return;
   list.innerHTML = '';
-  // filter orders: paymentType === 'cash' && status === 'waiting_for_cash' && terminalId in boundTerminals
   const arr = Array.from(orders.entries()).filter(([k,o]) => {
     return o && o.paymentType === 'cash' && o.status === 'waiting_for_cash' && boundTerminals.includes(o.terminalId);
   }).sort((a,b)=> (a[1].time||0) - (b[1].time||0));
@@ -422,8 +404,6 @@ function populateCashOrders(){
   });
 }
 
-/* ===== Modal behavior (cashier) ===== */
-let currentModalKey = null;
 function openOrderModal(key, order){
   currentModalKey = key;
   modalCode.textContent = order.orderNumber || '—';
@@ -440,7 +420,6 @@ modalConfirm.addEventListener('click', ()=> {
   if(!currentModalKey) return;
   const key = currentModalKey;
   const changeVal = parseFloat(changeInput.value) || 0.0;
-  // update firebase: status -> cooking, add confirmedBy/At and changeGiven
   const updates = {
     status: 'cooking',
     confirmedBy: 'cashier',
@@ -449,9 +428,7 @@ modalConfirm.addEventListener('click', ()=> {
   };
   ordersRef.child(key).update(updates, (err)=>{
     if(err){ alert('Ошибка обновления: '+err.message); return; }
-    // log history locally
     pushCashierHistory({ action: 'confirm', orderNumber: orders.get(key)?.orderNumber || key, key, changeGiven: changeVal, time: Date.now() });
-    // remove from local waiting view (populate will reflect live DB change)
     modalBack.style.display='none';
     currentModalKey = null;
   });
@@ -472,11 +449,10 @@ modalReject.addEventListener('click', ()=> {
   });
 });
 
-/* ===== Cashier history (local) ===== */
 function pushCashierHistory(entry){
   const hist = JSON.parse(localStorage.getItem('cashierHistory') || '[]');
   hist.unshift(entry);
-  localStorage.setItem('cashierHistory', JSON.stringify(hist.slice(0,200))); // cap
+  localStorage.setItem('cashierHistory', JSON.stringify(hist.slice(0,200)));
   renderHistory();
 }
 function renderHistory(){
@@ -494,109 +470,226 @@ function renderHistory(){
   });
 }
 
-/* ===== Kitchen populate ===== */
-function populateKitchen(){
-  const cookingHolder = document.getElementById('kitchenCooking');
-  const readyHolder = document.getElementById('kitchenReady');
+/* ===== Kitchen minimal UI (as requested) =====
+   - minimal header: logo, bind button, brand
+   - list of cooking orders occupies main space (big cards)
+   - ready list small with small tiles and cancel option
+   - show order number, items (with counts), and total price if present; hide total if missing
+   - no boundTerminals list displayed here (but orders filtered by boundTerminals)
+*/
+function renderKitchenMinimal(){
+  currentRoleLabel.textContent = 'Кухня';
+  mainPanel.innerHTML = `
+    <div class="kitchen-root">
+      <div class="kitchen-top">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div id="kLogo" style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;cursor:pointer">FP</div>
+          <div style="font-weight:800">FireDome — Кухня</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+          <button id="kBindBtn" class="bind-btn">Привязать терминал</button>
+          <div class="muted" id="kBoundInfo">${boundTerminals.length ? ('Терминалы: ' + boundTerminals.join(', ')) : 'Нет привязанных терминалов'}</div>
+        </div>
+      </div>
+
+      <div style="font-size:13px;color:var(--muted)">Список готовящихся заказов. Карточки занимают всё пространство. Нажмите плитку — отметить готовым (или изменить статус).</div>
+
+      <div class="kitchen-full-list" id="kCookingList"></div>
+
+      <div style="margin-top:6px">
+        <div style="font-weight:800;margin-bottom:8px">Готово (малые плитки — можно отменить)</div>
+        <div class="ready-list" id="kReadyList"></div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('kBindBtn').addEventListener('click', ()=> {
+    const id = prompt('Введи ID терминала для привязки (пример: 1103)');
+    if(!id) return;
+    if(boundTerminals.includes(id)) {
+      alert('Терминал уже привязан');
+      return;
+    }
+    boundTerminals.push(id);
+    localStorage.setItem('boundTerminals', JSON.stringify(boundTerminals));
+    document.getElementById('kBoundInfo').textContent = 'Терминалы: ' + boundTerminals.join(', ');
+    renderBoundList();
+    refreshMain();
+  });
+
+  populateKitchenMinimal();
+}
+
+/* helper to format items summary: "2 × Чизбургер" */
+function formatItemsList(items){
+  if(!items || !items.length) return [];
+  // If items have count property, aggregate by name
+  const map = new Map();
+  for(const it of items){
+    const name = it.name || 'Товар';
+    const cnt = Number(it.count || 1);
+    const key = name;
+    map.set(key, (map.get(key) || 0) + cnt);
+  }
+  const rows = [];
+  for(const [name, cnt] of map.entries()){
+    rows.push({ name, count: cnt });
+  }
+  return rows;
+}
+
+/* populate kitchen minimal view */
+function populateKitchenMinimal(){
+  const cookingHolder = document.getElementById('kCookingList');
+  const readyHolder = document.getElementById('kReadyList');
   if(!cookingHolder || !readyHolder) return;
+
   cookingHolder.innerHTML = '';
   readyHolder.innerHTML = '';
 
-  // cooking: status === 'cooking' or 'packing' (exclude waiting_for_cash)
+  if(boundTerminals.length === 0){
+    cookingHolder.innerHTML = '<div class="muted">Нет привязанных терминалов — привяжи терминал (кнопка "Привязать терминал")</div>';
+    return;
+  }
+
+  // cooking orders: only status === 'cooking' (explicit)
   const cookingArr = Array.from(orders.entries()).filter(([k,o])=>{
-    return o && boundTerminals.includes(o.terminalId) && (o.status === 'cooking' || o.status === 'packing');
+    return o && boundTerminals.includes(o.terminalId) && o.status === 'cooking';
   }).sort((a,b)=> (a[1].time||0) - (b[1].time||0));
 
   const readyArr = Array.from(orders.entries()).filter(([k,o])=>{
-    if(!o || !boundTerminals.includes(o.terminalId)) return false;
-    if(o.status !== 'ready') return false;
-    // check timeReady - only show if within 2 minutes
-    const timeReady = o.timeReady || 0;
-    if(!timeReady) return true; // still show if no timeReady present (fresh)
-    return (Date.now() - timeReady) <= 2 * 60 * 1000;
+    return o && boundTerminals.includes(o.terminalId) && o.status === 'ready';
   }).sort((a,b)=> (a[1].timeReady||0) - (b[1].timeReady||0));
 
-  if(cookingArr.length === 0) cookingHolder.innerHTML = '<div class="muted">Пусто</div>';
-  cookingArr.forEach(([k,o])=>{
-    const tile = document.createElement('div'); tile.className = 'tile cooking'; tile.textContent = o.orderNumber || '—';
-    tile.addEventListener('click', ()=> cycleKitchenStatus(k,o,tile));
-    cookingHolder.appendChild(tile);
-  });
+  // render cooking as big cards that occupy width (stacked)
+  if(cookingArr.length === 0){
+    cookingHolder.innerHTML = '<div class="muted">Пусто — нет готовящихся заказов</div>';
+  } else {
+    cookingArr.forEach(([k,o])=>{
+      const card = document.createElement('div');
+      card.className = 'cooking-card';
+      // order number
+      const num = document.createElement('div'); num.className = 'num'; num.textContent = o.orderNumber || '—';
+      card.appendChild(num);
+      // items
+      const itemsWrapper = document.createElement('div');
+      itemsWrapper.className = 'items-list';
+      const rows = formatItemsList(o.items || []);
+      if(rows.length === 0){
+        const r = document.createElement('div'); r.className = 'item-row muted'; r.textContent = 'Позиции не указаны';
+        itemsWrapper.appendChild(r);
+      } else {
+        rows.forEach(rw=>{
+          const r = document.createElement('div'); r.className = 'item-row';
+          const left = document.createElement('div'); left.textContent = `${rw.count} × ${rw.name}`;
+          itemsWrapper.appendChild(r);
+          r.appendChild(left);
+        });
+      }
+      card.appendChild(itemsWrapper);
+      // total price if present in order.amount or order.total
+      const totalVal = (o.amount !== undefined) ? o.amount : (o.total !== undefined ? o.total : null);
+      if(totalVal !== null && !isNaN(Number(totalVal))){
+        const tot = document.createElement('div'); tot.className = 'total-row';
+        tot.innerHTML = `<div class="muted">Итого</div><div>${Number(totalVal).toFixed(2)}</div>`;
+        card.appendChild(tot);
+      }
+      // actions: click to mark ready (or change)
+      const actions = document.createElement('div'); actions.style.display='flex'; actions.style.gap='8px'; actions.style.marginTop='8px';
+      const btnReady = document.createElement('button'); btnReady.className='btn'; btnReady.textContent='Пометить готовым';
+      btnReady.addEventListener('click', ()=> {
+        const updates = { status: 'ready', timeReady: Date.now() };
+        ordersRef.child(k).update(updates, err=>{
+          if(err) return alert('Ошибка: ' + err.message);
+          // local update will be processed by listener
+        });
+      });
+      const btnCancel = document.createElement('button'); btnCancel.className='btn gray'; btnCancel.textContent='Отменить';
+      btnCancel.addEventListener('click', ()=> {
+        if(!confirm('Отменить этот заказ?')) return;
+        ordersRef.child(k).update({ status: 'canceled', canceledBy: 'kitchen', canceledAt: Date.now() }, err=>{
+          if(err) alert('Ошибка при отмене: '+err.message);
+        });
+      });
+      actions.appendChild(btnReady); actions.appendChild(btnCancel);
+      card.appendChild(actions);
 
-  if(readyArr.length === 0) readyHolder.innerHTML = '<div class="muted">Пусто</div>';
-  readyArr.forEach(([k,o])=>{
-    const tile = document.createElement('div'); tile.className = 'tile ready'; tile.textContent = o.orderNumber || '—';
-    tile.addEventListener('click', ()=> cycleKitchenStatus(k,o,tile));
-    readyHolder.appendChild(tile);
-    // schedule removal after remaining time (if any)
-    const timeReady = o.timeReady || Date.now();
-    const remaining = Math.max(0, 2*60*1000 - (Date.now() - timeReady));
-    if(remaining > 0){
-      setTimeout(()=> {
-        // re-render (it will omit expired)
-        populateKitchen();
-      }, remaining + 200);
-    } else {
-      // expired -> will disappear on next refresh
-    }
-  });
+      cookingHolder.appendChild(card);
+    });
+  }
+
+  // ready small tiles — include cancel button on tile or click to cancel
+  if(readyArr.length === 0){
+    readyHolder.innerHTML = '<div class="muted">Нет готовых заказов</div>';
+  } else {
+    readyArr.forEach(([k,o])=>{
+      const tile = document.createElement('div'); tile.className = 'ready-tile';
+      const num = document.createElement('div'); num.className = 'num'; num.textContent = o.orderNumber || '—';
+      tile.appendChild(num);
+      const btnCancel = document.createElement('button'); btnCancel.className = 'btn gray'; btnCancel.textContent = 'Отменить';
+      btnCancel.addEventListener('click', ()=> {
+        if(!confirm('Отменить готовый заказ?')) return;
+        ordersRef.child(k).update({ status: 'canceled', canceledBy: 'kitchen', canceledAt: Date.now() }, err=>{
+          if(err) alert('Ошибка при отмене: '+err.message);
+        });
+      });
+      tile.appendChild(btnCancel);
+      readyHolder.appendChild(tile);
+    });
+  }
 }
 
-/* Cycle kitchen status: cooking -> packing -> ready (and set timeReady) */
-function cycleKitchenStatus(key, order, tileEl){
+/* ===== Kitchen cycle (used by other UIs) - keep simple helper, but kitchen uses explicit buttons above ===== */
+function cycleKitchenStatus(key, order){
   if(!order) return;
+  // simple toggle: cooking -> ready (set timeReady) ; ready -> canceled (or cooking)
   const next = order.status === 'cooking' ? 'ready' : 'cooking';
   const updates = { status: next };
-  if(next === 'ready'){
-    updates.timeReady = Date.now();
-  }
+  if(next === 'ready') updates.timeReady = Date.now();
   ordersRef.child(key).update(updates, err=>{
     if(err) return alert('Ошибка смены статуса: '+err.message);
-    // immediate local update (will be overwritten by firebase event)
-    const local = Object.assign({}, order, updates);
-    orders.set(key, local);
-    if(next === 'ready'){
-      // speak
-      speakText(`Заказ номер ${local.orderNumber} готов`);
-    }
-    // refresh UI
-    populateKitchen();
   });
 }
 
-/* TTS helper */
-function speakText(text){
+/* ===== TTS helper with dedupe using 'announced' Set (in-memory only) ===== */
+function speakTextOnce(key, text){
+  // if already announced for this session — skip
+  if(announced.has(key)) return;
+  announced.add(key);
   try{
     const u = new SpeechSynthesisUtterance(text);
     u.lang = 'ru-RU';
-    speechSynthesis.cancel();
-    // small beep
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = 'sine';
-    o.frequency.value = 880;
-    g.gain.value = 0.05;
-    o.connect(g); g.connect(ctx.destination);
-    o.start();
-    setTimeout(()=> { o.stop(); ctx.close(); speechSynthesis.speak(u); }, 160);
-  }catch(e){
-    console.warn('TTS fail', e);
-  }
+    // beep then speak
+    try{
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.value = 880;
+      g.gain.value = 0.05;
+      o.connect(g); g.connect(ctx.destination);
+      o.start();
+      setTimeout(()=> { o.stop(); ctx.close(); speechSynthesis.speak(u); }, 160);
+    }catch(_){
+      speechSynthesis.speak(u);
+    }
+  }catch(e){ console.warn('TTS fail', e); }
 }
 
-/* ===== Firebase listeners ===== */
+/* ===== Firebase listeners (shared) ===== */
 ordersRef.on('child_added', snap=>{
   const key = snap.key;
   const val = snap.val();
   orders.set(key, val);
-  // if current role is cashier, and this is waiting_for_cash from bound terminal -> auto open modal
+
+  // if current role is cashier & it's a waiting cash order from bound terminal -> show / auto open
   if(currentRole === 'cashier' && val.paymentType === 'cash' && val.status === 'waiting_for_cash' && boundTerminals.includes(val.terminalId)){
     populateCashOrders();
     if(autoOpenModal) openOrderModal(key, val);
   }
-  // if current role kitchen -> refresh
-  if(currentRole === 'kitchen') populateKitchen();
+
+  // if kitchen currently displayed -> refresh
+  if(currentRole === 'kitchen') populateKitchenMinimal();
 });
 
 ordersRef.on('child_changed', snap=>{
@@ -605,29 +698,36 @@ ordersRef.on('child_changed', snap=>{
   const prev = orders.get(key);
   orders.set(key, val);
 
-  // If order became ready -> speak and ensure timeReady exists
   const becameReady = prev && (prev.status !== 'ready') && (val.status === 'ready');
+
   if(becameReady){
-    // set timeReady if not set
+    // ensure timeReady exists
     if(!val.timeReady){
-      ordersRef.child(key).update({ timeReady: Date.now() });
+      ordersRef.child(key).update({ timeReady: Date.now() }).catch(()=>{});
+      val.timeReady = Date.now();
+      orders.set(key,val);
     }
-    // speak
+    // speak but only once per session (in-memory)
     if(boundTerminals.includes(val.terminalId)){
-      speakText(`Заказ номер ${val.orderNumber} готов`);
+      speakTextOnce(key, `Заказ номер ${val.orderNumber} готов`);
     }
   }
 
-  // If cashier view -> refresh orders list
+  // if status went to canceled remove from local view where appropriate
+  if(val.status === 'canceled' || val.status === 'rejected'){
+    // nothing special - UI will filter
+  }
+
+  // refresh UIs
   if(currentRole === 'cashier') populateCashOrders();
-  if(currentRole === 'kitchen') populateKitchen();
+  if(currentRole === 'kitchen') populateKitchenMinimal();
 });
 
 ordersRef.on('child_removed', snap=>{
   const key = snap.key;
   if(orders.has(key)) orders.delete(key);
   if(currentRole === 'cashier') populateCashOrders();
-  if(currentRole === 'kitchen') populateKitchen();
+  if(currentRole === 'kitchen') populateKitchenMinimal();
 });
 
 /* ===== initial load: fetch once so reload persists view ===== */
@@ -637,52 +737,20 @@ ordersRef.on('child_removed', snap=>{
     snapshot.forEach(child=>{
       orders.set(child.key, child.val());
     });
-    // render initial UI according to role
+    renderBoundList();
     refreshMain();
   } catch(e){
     console.error('Init load failed', e);
   }
 })();
 
-/* ===== Helpers: render/update based on live map ===== */
-function refreshMainAndLists(){
-  if(currentRole === 'cashier') populateCashOrders();
-  if(currentRole === 'kitchen') populateKitchen();
-}
-
-/* utility: whenever orders map updates externally, call refreshMain */
-function refreshMain(){
-  // update role info
-  currentRoleLabel.textContent = currentRole ? (currentRole === 'cashier' ? 'Кассир' : 'Кухня') : '—';
-  roleInfo.textContent = currentRole === 'cashier' ? 'Обрабатывай наличные заявки' : 'Управление готовкой';
-  renderBoundList();
-  // render main area
-  refreshMain(); // careful: this calls itself ; fix below
-}
-
-/* small fix: avoid recursion - ensure correct refreshMain usage */
-function refreshMain(){
-  // render appropriate content
-  if(!currentRole){
-    mainPanel.innerHTML = '<div class="muted">Выберите роль.</div>';
-    return;
-  }
-  if(boundTerminals.length === 0){
-    mainPanel.innerHTML = '<div class="muted">Нет привязанных терминалов — добавьте в персональном меню (3 клика по логотипу).</div>';
-    return;
-  }
-  if(currentRole === 'cashier') renderCashier();
-  else renderKitchen();
-}
-
-/* Also expose some debug helpers on window */
+/* expose debug helpers */
 window._fairpoint = {
   getBound: ()=> boundTerminals.slice(),
   setBound: arr => { boundTerminals = arr; localStorage.setItem('boundTerminals', JSON.stringify(boundTerminals)); renderTermList(); renderBoundList(); refreshMain(); },
   getOrdersMap: ()=> Array.from(orders.entries()),
-  playTts: speakText
+  speakOnce: speakTextOnce
 };
-
 </script>
 </body>
 </html>
