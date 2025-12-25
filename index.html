@@ -3,70 +3,54 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>FairPoint — Касса (Наличные)</title>
+<title>FairPoint — Касса и Кухня</title>
 
-<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 
 <style>
-  :root{
-    --bg:#f7f7f8;
-    --card:#ffffff;
-    --muted:#666;
-    --accent:#ff7a45;
-    --accent-dark:#d9480f;
-    --success:#52c41a;
-    --danger:#ff4d4f;
-    --shadow: 0 6px 18px rgba(0,0,0,0.08);
-    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
-    color-scheme: light;
-  }
-
-  html,body{height:100%; margin:0; background:var(--bg); color:#111;}
-
-  .wrap{max-width:1200px; margin:20px auto; padding:18px;}
-
-  header{display:flex; align-items:center; gap:16px; margin-bottom:10px;}
-  .logo{width:56px; height:56px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--accent-dark)); display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size:18px;}
-  h1{font-size:20px; margin:0;}
-  .top-controls{margin-left:auto; display:flex; gap:8px; align-items:center;}
-
-  .panel{background:var(--card); border-radius:12px; padding:12px; box-shadow:var(--shadow);}
-
-  /* main layout */
-  .grid{display:grid; grid-template-columns: 1fr 320px; gap:12px;}
-
-  /* left: list of cash requests */
-  .requests{display:flex; flex-direction:column; gap:12px;}
-  .requests .panel{flex:1; display:flex; flex-direction:column; gap:8px;}
-  .list{display:flex; flex-direction:column; gap:8px; max-height:65vh; overflow:auto; padding:4px;}
-  .req{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px; border-radius:10px; background:#fff; border:1px solid #eee;}
-  .req .left{display:flex; gap:12px; align-items:center;}
-  .code{font-weight:800; font-size:18px; background:linear-gradient(90deg,var(--accent),var(--accent-dark)); color:#fff; padding:6px 10px; border-radius:8px;}
-  .meta{color:var(--muted); font-size:13px;}
-  .amount{font-weight:800; font-size:16px;}
-  .badge{font-size:12px; padding:6px 8px; border-radius:8px; background:#fff; border:1px solid #eee;}
-
-  /* right: details / search */
-  .sidebar{display:flex; flex-direction:column; gap:12px;}
-  .search-row{display:flex; gap:8px;}
-  input[type="text"]{padding:10px; border-radius:8px; border:1px solid #ddd; flex:1;}
-  button{padding:10px 12px; border-radius:8px; border:none; cursor:pointer; background:var(--accent); color:#fff; font-weight:700;}
-  button.gray{background:#f0f0f0; color:#111; border:1px solid #e6e6e6;}
-  button.red{background:var(--danger);}
-
-  /* modal */
-  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:999;}
-  .modal{width:520px; background:#fff; border-radius:12px; padding:18px; box-shadow:0 12px 36px rgba(0,0,0,0.25);}
-  .modal h3{margin:0 0 8px 0;}
-  .modal .items{margin-top:10px; border-top:1px dashed #eee; padding-top:8px; max-height:240px; overflow:auto;}
-  .modal .row{display:flex; justify-content:space-between; gap:8px; margin-bottom:6px;}
-  .modal .actions{display:flex; gap:8px; margin-top:12px; justify-content:flex-end;}
-
-  /* small helpers */
-  .muted{color:var(--muted); font-size:13px;}
-  .empty{padding:24px; text-align:center; color:var(--muted);}
+:root{
+  --bg:#f7f7f8;
+  --card:#fff;
+  --muted:#666;
+  --accent:#ff7a45;
+  --accent-dark:#d9480f;
+  --success:#52c41a;
+  --danger:#ff4d4f;
+  --shadow:0 6px 18px rgba(0,0,0,0.08);
+  font-family:Inter,"Segoe UI",Roboto,Arial,sans-serif;
+}
+html,body{height:100%;margin:0;background:var(--bg);color:#111;}
+.wrap{max-width:1200px;margin:20px auto;padding:18px;}
+header{display:flex;align-items:center;gap:16px;margin-bottom:10px;}
+.logo{width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:18px;}
+h1{font-size:20px;margin:0;}
+.top-controls{margin-left:auto;display:flex;gap:8px;align-items:center;}
+.panel{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow);}
+.grid{display:grid;grid-template-columns:1fr 320px;gap:12px;}
+.requests{display:flex;flex-direction:column;gap:12px;}
+.requests .panel{flex:1;display:flex;flex-direction:column;gap:8px;}
+.list{display:flex;flex-direction:column;gap:8px;max-height:65vh;overflow:auto;padding:4px;}
+.req{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:10px;background:#fff;border:1px solid #eee;}
+.req .left{display:flex;gap:12px;align-items:center;}
+.code{font-weight:800;font-size:18px;background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#fff;padding:6px 10px;border-radius:8px;}
+.meta{color:var(--muted);font-size:13px;}
+.amount{font-weight:800;font-size:16px;}
+.badge{font-size:12px;padding:6px 8px;border-radius:8px;background:#fff;border:1px solid #eee;}
+.sidebar{display:flex;flex-direction:column;gap:12px;}
+.search-row{display:flex;gap:8px;}
+input[type="text"]{padding:10px;border-radius:8px;border:1px solid #ddd;flex:1;}
+button{padding:10px 12px;border-radius:8px;border:none;cursor:pointer;background:var(--accent);color:#fff;font-weight:700;}
+button.gray{background:#f0f0f0;color:#111;border:1px solid #e6e6e6;}
+button.red{background:var(--danger);}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:999;}
+.modal{width:520px;background:#fff;border-radius:12px;padding:18px;box-shadow:0 12px 36px rgba(0,0,0,0.25);}
+.modal h3{margin:0 0 8px 0;}
+.modal .items{margin-top:10px;border-top:1px dashed #eee;padding-top:8px;max-height:240px;overflow:auto;}
+.modal .row{display:flex;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.modal .actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end;}
+.muted{color:var(--muted);font-size:13px;}
+.empty{padding:24px;text-align:center;color:var(--muted);}
 </style>
 </head>
 <body>
@@ -74,119 +58,111 @@
   <header>
     <div class="logo">FP</div>
     <div>
-      <h1>FairPoint — Касса (Наличные)</h1>
-      <div class="muted">Здесь кассир принимает наличные — подтверждай или отклоняй заявки.</div>
+      <h1>FairPoint — Касса и Кухня</h1>
+      <div class="muted">Кассир и кухня работают в одном интерфейсе. Подтверждай, отклоняй, готовь заказы.</div>
     </div>
-
     <div class="top-controls">
       <div class="muted">Авто-открытие новых заявок включено</div>
     </div>
   </header>
 
   <div class="grid">
-    <!-- left column: list -->
     <div class="requests panel">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div style="font-weight:800">Ожидающие оплаты наличными</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-weight:800">Ожидающие наличные/готовка</div>
         <div class="muted">Новые автоматически открываются</div>
       </div>
-
       <div class="list" id="requestsList"></div>
-      <div id="noRequests" class="empty">Список пуст — новых заявок нет.</div>
+      <div id="noRequests" class="empty">Список пуст.</div>
     </div>
 
-    <!-- right column: search / manual -->
     <div class="sidebar">
       <div class="panel">
-        <div style="font-weight:800; margin-bottom:8px;">Поиск по коду</div>
+        <div style="font-weight:800;margin-bottom:8px;">Поиск по коду</div>
         <div class="search-row">
-          <input id="searchInput" type="text" placeholder="Введите код заказа (пример: 0022)" />
+          <input id="searchInput" type="text" placeholder="Введите код заказа" />
           <button id="searchBtn">Найти</button>
         </div>
         <div id="searchResult" style="margin-top:10px;"></div>
       </div>
-
       <div class="panel">
-        <div style="font-weight:800; margin-bottom:8px;">История действий кассира</div>
-        <div id="actionsLog" style="max-height:28vh; overflow:auto; font-size:13px; color:var(--muted);"></div>
+        <div style="font-weight:800;margin-bottom:8px;">История действий</div>
+        <div id="actionsLog" style="max-height:28vh;overflow:auto;font-size:13px;color:var(--muted);"></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Modal -->
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal" role="dialog" aria-modal="true">
-    <h3 id="modalTitle">Заявка наличными</h3>
-    <div id="modalCode" style="font-size:20px; font-weight:800; margin-top:6px;"></div>
+    <h3 id="modalTitle">Заявка</h3>
+    <div id="modalCode" style="font-size:20px;font-weight:800;margin-top:6px;"></div>
     <div style="margin-top:8px;">
       <div class="row"><div class="muted">Сумма</div><div id="modalAmount" class="amount"></div></div>
       <div class="row"><div class="muted">Терминал</div><div id="modalTerminal" class="muted"></div></div>
       <div class="row"><div class="muted">Время</div><div id="modalTime" class="muted"></div></div>
     </div>
-
     <div class="items" id="modalItems"></div>
-
     <div class="actions">
       <button id="btnReject" class="gray">Отклонить</button>
       <button id="btnExit" class="gray">Выйти</button>
-      <button id="btnConfirm" style="background:var(--accent); color:#fff;">Подтвердить</button>
+      <button id="btnConfirm" style="background:var(--accent);color:#fff;">Подтвердить/Готово</button>
     </div>
   </div>
 </div>
 
 <script>
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyABvY_6cHonbLvdBj5cYMSheJDLMd_-bNw",
-  authDomain: "app-fairpay.firebaseapp.com",
-  databaseURL: "https://app-fairpay-default-rtdb.firebaseio.com",
-  projectId: "app-fairpay",
-  storageBucket: "app-fairpay.firebasestorage.app",
-  messagingSenderId: "29576302334",
-  appId: "1:29576302334:web:0e559f804bf62c59981faf"
+  apiKey:"AIzaSyABvY_6cHonbLvdBj5cYMSheJDLMd_-bNw",
+  authDomain:"app-fairpay.firebaseapp.com",
+  databaseURL:"https://app-fairpay-default-rtdb.firebaseio.com",
+  projectId:"app-fairpay",
+  storageBucket:"app-fairpay.firebasestorage.app",
+  messagingSenderId:"29576302334",
+  appId:"1:29576302334:web:0e559f804bf62c59981faf"
 };
 firebase.initializeApp(FIREBASE_CONFIG);
 const db = firebase.database();
 const ordersRef = db.ref('orders');
 
 const waitingCash = new Map();
-const requestsList = document.getElementById('requestsList');
-const noRequests = document.getElementById('noRequests');
-const modalBackdrop = document.getElementById('modalBackdrop');
-const modalCode = document.getElementById('modalCode');
-const modalAmount = document.getElementById('modalAmount');
-const modalTerminal = document.getElementById('modalTerminal');
-const modalTime = document.getElementById('modalTime');
-const modalItems = document.getElementById('modalItems');
-const modalTitle = document.getElementById('modalTitle');
-const btnConfirm = document.getElementById('btnConfirm');
-const btnReject = document.getElementById('btnReject');
-const btnExit = document.getElementById('btnExit');
-const searchInput = document.getElementById('searchInput');
-const searchBtn = document.getElementById('searchBtn');
-const searchResult = document.getElementById('searchResult');
-const actionsLog = document.getElementById('actionsLog');
-let currentModalOrderKey = null;
+const requestsList=document.getElementById('requestsList');
+const noRequests=document.getElementById('noRequests');
+const modalBackdrop=document.getElementById('modalBackdrop');
+const modalCode=document.getElementById('modalCode');
+const modalAmount=document.getElementById('modalAmount');
+const modalTerminal=document.getElementById('modalTerminal');
+const modalTime=document.getElementById('modalTime');
+const modalItems=document.getElementById('modalItems');
+const modalTitle=document.getElementById('modalTitle');
+const btnConfirm=document.getElementById('btnConfirm');
+const btnReject=document.getElementById('btnReject');
+const btnExit=document.getElementById('btnExit');
+const searchInput=document.getElementById('searchInput');
+const searchBtn=document.getElementById('searchBtn');
+const searchResult=document.getElementById('searchResult');
+const actionsLog=document.getElementById('actionsLog');
+let currentModalOrderKey=null;
 
-function fmtTime(ts){ try{ return new Date(ts).toLocaleString(); }catch(e){ return String(ts); } }
+function fmtTime(ts){try{return new Date(ts).toLocaleString()}catch(e){return String(ts)}}
 
 function renderList(){
-  requestsList.innerHTML = '';
-  if(waitingCash.size === 0){ noRequests.style.display='block'; return; }
+  requestsList.innerHTML='';
+  if(waitingCash.size===0){ noRequests.style.display='block'; return; }
   noRequests.style.display='none';
-  const arr = Array.from(waitingCash.entries()).sort((a,b)=>((a[1].time||0)-(b[1].time||0)));
-  for(const [key, order] of arr){
-    const el = document.createElement('div'); el.className='req'; el.dataset.key=key;
-    const left = document.createElement('div'); left.className='left';
-    const code = document.createElement('div'); code.className='code'; code.textContent=order.orderNumber||'—';
-    const meta = document.createElement('div'); 
+  const arr=Array.from(waitingCash.entries()).sort((a,b)=>(a[1].time||0)-(b[1].time||0));
+  for(const [key,order] of arr){
+    const el=document.createElement('div'); el.className='req'; el.dataset.key=key;
+    const left=document.createElement('div'); left.className='left';
+    const code=document.createElement('div'); code.className='code'; code.textContent=order.orderNumber||'—';
+    const meta=document.createElement('div');
     meta.innerHTML=`<div class="muted">${order.items&&order.items.length?order.items.map(i=>i.name).join(', '):'Заказ'}</div>
                     <div class="muted">${fmtTime(order.time)}</div>`;
     left.appendChild(code); left.appendChild(meta);
-    const right = document.createElement('div'); right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end';
-    const amount = document.createElement('div'); amount.className='amount'; amount.textContent=(order.amount!==undefined)?Number(order.amount).toFixed(2):'—';
-    const actions = document.createElement('div'); actions.style.marginTop='6px';
-    const openBtn = document.createElement('button'); openBtn.className='gray'; openBtn.style.marginRight='6px'; openBtn.textContent='Открыть';
+    const right=document.createElement('div'); right.style.display='flex'; right.style.flexDirection='column'; right.style.alignItems='flex-end';
+    const amount=document.createElement('div'); amount.className='amount'; amount.textContent=(order.amount!==undefined)?Number(order.amount).toFixed(2):'—';
+    const actions=document.createElement('div'); actions.style.marginTop='6px';
+    const openBtn=document.createElement('button'); openBtn.className='gray'; openBtn.style.marginRight='6px'; openBtn.textContent='Открыть';
     openBtn.onclick=()=>openModalForKey(key); actions.appendChild(openBtn);
     right.appendChild(amount); right.appendChild(actions);
     el.appendChild(left); el.appendChild(right); requestsList.appendChild(el);
@@ -194,8 +170,8 @@ function renderList(){
 }
 
 function openModalForKey(key){
-  const order = waitingCash.get(key); if(!order) return; currentModalOrderKey=key;
-  modalTitle.textContent='Заявка на оплату (наличные)';
+  const order=waitingCash.get(key); if(!order) return; currentModalOrderKey=key;
+  modalTitle.textContent='Заявка';
   modalCode.textContent=order.orderNumber||'—';
   modalAmount.textContent=(order.amount!==undefined)?Number(order.amount).toFixed(2):'—';
   modalTerminal.textContent=order.terminalId||'—';
@@ -212,12 +188,19 @@ function closeModal(){ modalBackdrop.style.display='none'; currentModalOrderKey=
 btnConfirm.addEventListener('click',()=>{
   const key=currentModalOrderKey; if(!key) return; const order=waitingCash.get(key); if(!order) return;
   btnConfirm.disabled=true; btnReject.disabled=true;
-  const updates={ status:'cooking', cookingBy:'cashier', confirmedBy:'cashier', confirmedAt:Date.now() };
+  let updates={};
+  if(order.status==='waiting_for_cash'){ // кассир
+    updates={status:'cooking', cookingBy:'cashier', confirmedBy:'cashier', confirmedAt:Date.now()};
+    logAction(`Подтверждён наличный платёж — ${order.orderNumber}`);
+  } else if(order.status==='cooking'){ // кухня
+    updates={status:'ready', readyBy:'kitchen', readyAt:Date.now()};
+    logAction(`Заказ готов — ${order.orderNumber}`);
+  } else { btnConfirm.disabled=false; btnReject.disabled=false; return; }
+
   ordersRef.child(key).update(updates,(err)=>{
     btnConfirm.disabled=false; btnReject.disabled=false;
-    if(err){ logAction(`Ошибка подтверждения ${order.orderNumber}: ${err.message}`); alert('Ошибка обновления в базе: '+err.message); return; }
-    logAction(`Подтверждён наличный платёж — ${order.orderNumber}`);
-    waitingCash.delete(key); renderList(); closeModal();
+    if(err){ alert('Ошибка: '+err.message); return; }
+    if(waitingCash.has(key)){ waitingCash.delete(key); renderList(); closeModal(); }
   });
 });
 
@@ -227,9 +210,9 @@ btnReject.addEventListener('click',()=>{
   const updates={ rejectedByCashier:true, rejectedAt:Date.now(), rejectedReason:'insufficient_funds' };
   ordersRef.child(key).update(updates,(err)=>{
     btnReject.disabled=false; btnConfirm.disabled=false;
-    if(err){ logAction(`Ошибка отклонения ${order.orderNumber}: ${err.message}`); alert('Ошибка обновления в базе: '+err.message); return; }
-    logAction(`Отклонён наличный платёж — ${order.orderNumber}`);
+    if(err){ alert('Ошибка: '+err.message); return; }
     const newOrder=Object.assign({},order,updates); waitingCash.set(key,newOrder); renderList(); closeModal();
+    logAction(`Отклонён наличный платёж — ${order.orderNumber}`);
   });
 });
 
@@ -242,27 +225,31 @@ searchBtn.addEventListener('click',async()=>{
   searchResult.textContent='Идёт поиск...';
   try{
     const snapshot=await ordersRef.once('value'); let foundKey=null;
-    snapshot.forEach(child=>{ const val=child.val(); if(String(val.orderNumber)===code && val.paymentType==='cash'){ foundKey=child.key; return true; } });
-    if(!foundKey){ searchResult.textContent='Код не найден (или не заявка на наличную оплату).'; return; }
-    const snap=await ordersRef.child(foundKey).once('value'); const order=snap.val(); if(!order){ searchResult.textContent='Не удалось загрузить заказ.'; return; }
-    if(order.paymentType!=='cash'){ searchResult.textContent='Найденный заказ не является наличным.'; return; }
+    snapshot.forEach(child=>{ const val=child.val(); if(String(val.orderNumber)===code){ foundKey=child.key; return true; } });
+    if(!foundKey){ searchResult.textContent='Код не найден.'; return; }
+    const snap=await ordersRef.child(foundKey).once('value'); const order=snap.val(); if(!order){ searchResult.textContent='Ошибка загрузки'; return; }
     waitingCash.set(foundKey,order); renderList(); openModalForKey(foundKey); searchResult.textContent='';
   } catch(e){ console.error(e); searchResult.textContent='Ошибка поиска: '+e.message; }
 });
 
 function logAction(text){ const row=document.createElement('div'); row.textContent=`${new Date().toLocaleTimeString()} — ${text}`; actionsLog.prepend(row); }
 
-ordersRef.on('child_added',snap=>{ const key=snap.key; const order=snap.val(); if(order.paymentType==='cash' && order.status==='waiting_for_cash'){ waitingCash.set(key,order); renderList(); openModalForKey(key); logAction(`Новая заявка наличными: ${order.orderNumber||key}`); } });
+ordersRef.on('child_added',snap=>{
+  const key=snap.key; const order=snap.val();
+  if(order.status==='waiting_for_cash'||order.status==='cooking'){ waitingCash.set(key,order); renderList(); openModalForKey(key); logAction(`Новая заявка: ${order.orderNumber||key}`); }
+});
 
 ordersRef.on('child_changed',snap=>{
   const key=snap.key; const order=snap.val();
-  if(order.paymentType==='cash'){ if(order.status==='waiting_for_cash'){ waitingCash.set(key,order); } else if(order.status==='cooking'){ if(waitingCash.has(key)){ waitingCash.delete(key); } } else{ if(waitingCash.has(key)&&order.status!=='waiting_for_cash'){ waitingCash.delete(key); } } renderList();
-  } else{ if(waitingCash.has(key)){ waitingCash.delete(key); renderList(); } }
+  if(order.status==='waiting_for_cash'||order.status==='cooking'){ waitingCash.set(key,order); } else { waitingCash.delete(key); }
+  renderList();
 });
 
 ordersRef.on('child_removed',snap=>{ const key=snap.key; if(waitingCash.has(key)){ waitingCash.delete(key); renderList(); } });
 
-(async function initLoad(){ try{ const snapshot=await ordersRef.once('value'); snapshot.forEach(child=>{ const key=child.key; const order=child.val(); if(order.paymentType==='cash' && order.status==='waiting_for_cash'){ waitingCash.set(key,order); } }); renderList(); } catch(e){ console.error('Init load failed',e); } })();
+(async function initLoad(){
+  try{ const snapshot=await ordersRef.once('value'); snapshot.forEach(child=>{ const key=child.key; const order=child.val(); if(order.status==='waiting_for_cash'||order.status==='cooking'){ waitingCash.set(key,order); } }); renderList(); }catch(e){console.error('Init load failed',e);}
+})();
 </script>
 </body>
 </html>
